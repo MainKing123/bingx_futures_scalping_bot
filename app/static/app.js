@@ -13,49 +13,27 @@ function formToJson(form) {
   return payload;
 }
 
-async function postJson(url, payload) {
-  const response = await fetch(url, {
+document.getElementById('risk-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const payload = formToJson(event.target);
+  await fetch('/api/risk-config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`${url} failed: ${text}`);
-  }
-}
-
-document.getElementById('risk-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  try {
-    await postJson('/api/risk-config', formToJson(event.target));
-    await fetchState();
-  } catch (error) {
-    alert(error.message);
-  }
-});
-
-document.getElementById('strategy-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  try {
-    await postJson('/api/strategy-config', formToJson(event.target));
-    await fetchState();
-  } catch (error) {
-    alert(error.message);
-  }
+  await fetchState();
 });
 
 document.getElementById('tick-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const payload = formToJson(event.target);
   payload.symbol = 'BTC-USDT';
-  try {
-    await postJson('/api/tick', payload);
-    await fetchState();
-  } catch (error) {
-    alert(error.message);
-  }
+  await fetch('/api/tick', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  await fetchState();
 });
 
 fetchState();
