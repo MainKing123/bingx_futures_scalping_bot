@@ -58,3 +58,41 @@ pre {
   border-radius: 8px;
   padding: 12px;
 }
+
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.stat-item {
+  background: #020617;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.stat-item h3 {
+  margin: 0;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.stat-item p {
+  margin: 6px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+
+.inline-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.inline-actions button {
+  flex: 1 1 220px;
+}

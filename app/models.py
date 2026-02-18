@@ -24,6 +24,16 @@ class RiskConfig(BaseModel):
     max_leverage: int = Field(default=10, ge=1, le=125)
     stop_buffer_pct: float = Field(default=0.1, ge=0, le=3)
     rr_target: float = Field(default=2.0, gt=0.5, le=10)
+    daily_loss_limit_pct: float = Field(default=3.0, gt=0.1, le=20)
+    max_consecutive_losses: int = Field(default=3, ge=1, le=20)
+    cooldown_minutes: int = Field(default=10, ge=0, le=240)
+
+
+class StrategyConfig(BaseModel):
+    premium_zone: float = Field(default=0.65, gt=0.5, lt=1)
+    discount_zone: float = Field(default=0.35, gt=0, lt=0.5)
+    min_displacement_pct: float = Field(default=0.12, gt=0.01, le=2)
+    min_rr: float = Field(default=1.5, ge=1.0, le=10)
 
 
 class MarketTick(BaseModel):
@@ -51,15 +61,39 @@ class Position(BaseModel):
     side: PositionSide
     entry_price: float
     stop_price: float
+    initial_stop_price: float
     take_profit: float
+    tp1_price: float
     size_usdt: float
+    open_size_usdt: float
     leverage: int
     margin_used: float
+    moved_to_breakeven: bool = False
+    trailing_active: bool = False
     opened_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class BotStats(BaseModel):
+    closed_pnl_usdt: float = 0.0
+    consecutive_losses: int = 0
+    trades_closed: int = 0
+    wins: int = 0
+    losses: int = 0
+    daily_loss_used_pct: float = 0.0
+    cooldown_until: Optional[datetime] = None
+
+
+class ClosePositionRequest(BaseModel):
+    close_price: float = Field(gt=0)
+
+
+class ResetStateRequest(BaseModel):
+    keep_configs: bool = True
 
 
 class BotState(BaseModel):
     risk_config: RiskConfig
+    strategy_config: StrategyConfig
     latest_signal: StrategySignal
     active_position: Optional[Position] = None
-    closed_pnl_usdt: float = 0.0
+    stats: BotStats = Field(default_factory=BotStats)

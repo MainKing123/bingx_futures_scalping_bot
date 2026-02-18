@@ -18,7 +18,21 @@
           <label>Max leverage <input name="max_leverage" type="number" step="1" value="10" /></label>
           <label>Stop buffer (%) <input name="stop_buffer_pct" type="number" step="0.1" value="0.1" /></label>
           <label>RR target <input name="rr_target" type="number" step="0.1" value="2" /></label>
-          <button type="submit">Save config</button>
+          <label>Daily loss limit (%) <input name="daily_loss_limit_pct" type="number" step="0.1" value="3" /></label>
+          <label>Max consecutive losses <input name="max_consecutive_losses" type="number" step="1" value="3" /></label>
+          <label>Cooldown (minutes) <input name="cooldown_minutes" type="number" step="1" value="10" /></label>
+          <button type="submit">Save risk config</button>
+        </form>
+      </section>
+
+      <section class="card grid">
+        <h2>Strategy Configuration</h2>
+        <form id="strategy-form">
+          <label>Premium zone <input name="premium_zone" type="number" step="0.01" value="0.65" /></label>
+          <label>Discount zone <input name="discount_zone" type="number" step="0.01" value="0.35" /></label>
+          <label>Min displacement (%) <input name="min_displacement_pct" type="number" step="0.01" value="0.12" /></label>
+          <label>Min RR <input name="min_rr" type="number" step="0.1" value="1.5" /></label>
+          <button type="submit">Save strategy config</button>
         </form>
       </section>
 
@@ -32,6 +46,42 @@
           <label>30m Low <input name="low_30m" type="number" step="0.1" value="62000" /></label>
           <button type="submit">Process tick</button>
         </form>
+      </section>
+
+
+
+      <section class="card grid">
+        <h2>Manual Position Actions</h2>
+        <form id="close-form">
+          <label>Close price <input name="close_price" type="number" step="0.1" value="63000" /></label>
+          <button type="submit">Close active position</button>
+        </form>
+        <div class="inline-actions">
+          <button id="reset-keep-configs" type="button">Reset state (keep configs)</button>
+          <button id="reset-full" type="button">Reset all (defaults)</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Risk Guard Snapshot</h2>
+        <div id="risk-summary" class="stats-grid">
+          <article class="stat-item">
+            <h3>Daily loss used</h3>
+            <p id="daily-loss-used">0.00%</p>
+          </article>
+          <article class="stat-item">
+            <h3>Daily loss limit</h3>
+            <p id="daily-loss-limit">0.00%</p>
+          </article>
+          <article class="stat-item">
+            <h3>Consecutive losses</h3>
+            <p id="consecutive-losses">0</p>
+          </article>
+          <article class="stat-item">
+            <h3>Cooldown until</h3>
+            <p id="cooldown-until">—</p>
+          </article>
+        </div>
       </section>
 
       <section class="card">
