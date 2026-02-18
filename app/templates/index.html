@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scalping Bot Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>ICT/SMC Scalping Bot (MVP)</h1>
+
+      <section class="card grid">
+        <h2>Risk Configuration</h2>
+        <form id="risk-form">
+          <label>Equity (USDT) <input name="equity_usdt" type="number" step="0.1" value="1000" /></label>
+          <label>Risk per trade (%) <input name="risk_per_trade_pct" type="number" step="0.1" value="0.5" /></label>
+          <label>Max leverage <input name="max_leverage" type="number" step="1" value="10" /></label>
+          <label>Stop buffer (%) <input name="stop_buffer_pct" type="number" step="0.1" value="0.1" /></label>
+          <label>RR target <input name="rr_target" type="number" step="0.1" value="2" /></label>
+          <button type="submit">Save config</button>
+        </form>
+      </section>
+
+      <section class="card grid">
+        <h2>Simulate Tick</h2>
+        <form id="tick-form">
+          <label>Price <input name="price" type="number" step="0.1" value="63000" /></label>
+          <label>1m High <input name="high_1m" type="number" step="0.1" value="63100" /></label>
+          <label>1m Low <input name="low_1m" type="number" step="0.1" value="62900" /></label>
+          <label>30m High <input name="high_30m" type="number" step="0.1" value="64000" /></label>
+          <label>30m Low <input name="low_30m" type="number" step="0.1" value="62000" /></label>
+          <button type="submit">Process tick</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Live State</h2>
+        <pre id="state-view">Loading...</pre>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
