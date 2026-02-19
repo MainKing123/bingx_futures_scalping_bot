@@ -48,7 +48,6 @@ def detect_crt_candle(
     range_low = float(history["low"].min())
     high = float(current["high"])
     low = float(current["low"])
-    open_price = float(current["open"])
     close_price = float(current["close"])
     close_inside = range_low <= close_price <= range_high
     if not close_inside:
@@ -76,12 +75,6 @@ def detect_crt_candle(
             direction = "LONG"
             sweep_level = low
     else:
-        return None
-
-    # Require candle body to cross back into the prior range (rejection body).
-    if direction == "SHORT" and open_price <= range_high:
-        return None
-    if direction == "LONG" and open_price >= range_low:
         return None
 
     rejection_ratio = _wick_body_ratio(current, direction)

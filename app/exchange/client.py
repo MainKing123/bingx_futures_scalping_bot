@@ -70,18 +70,29 @@ class BingXClient:
                 await asyncio.sleep(wait)
         raise RuntimeError("Unreachable")
 
-    async def get_klines(self, symbol: str, interval: str, limit: int = 500, start_time: int | None = None, end_time: int | None = None) -> pd.DataFrame:
-        params = {"symbol": symbol, "interval": interval, "limit": limit}
-        if start_time:
-            params["startTime"] = start_time
-        if end_time:
-            params["endTime"] = end_time
-        raw = await self._request("GET", SWAP_KLINES, params=params, signed=False)
-        rows = raw if isinstance(raw, list) else raw.get("data", raw.get("result", []))
+    @staticmethod
+    def _extract_kline_rows(raw: dict | list) -> list:
+        return raw if isinstance(raw, list) else raw.get("data", raw.get("result", []))
+
+    @staticmethod
+    def _row_timestamp_ms(row) -> int | None:
+        if isinstance(row, dict):
+            value = row.get("time", row.get("timestamp"))
+        elif isinstance(row, (list, tuple)) and row:
+            value = row[0]
+        else:
+            return None
+        try:
+            return int(float(value))
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _rows_to_klines_frame(rows: list) -> pd.DataFrame:
         if not rows:
             return pd.DataFrame(columns=["open", "high", "low", "close", "volume"])
-        frame = pd.DataFrame(rows)
 
+        frame = pd.DataFrame(rows)
         if isinstance(rows[0], dict):
             ts_col = "time" if "time" in frame.columns else "timestamp"
             frame = frame.rename(columns={ts_col: "timestamp"})
@@ -104,8 +115,62 @@ class BingXClient:
 
         for col in ["open", "high", "low", "close", "volume"]:
             frame[col] = pd.to_numeric(frame[col], errors="coerce")
-        frame["timestamp"] = pd.to_datetime(frame["timestamp"], unit="ms", utc=True)
-        frame = frame.set_index("timestamp").sort_index()
+        frame["timestamp"] = pd.to_datetime(frame["timestamp"], unit="ms", utc=True, errors="coerce")
+        frame = frame.dropna(subset=["timestamp"]).set_index("timestamp")
+        frame = frame[~frame.index.duplicated(keep="last")].sort_index()
+        return frame
+
+    async def get_klines(self, symbol: str, interval: str, limit: int = 500, start_time: int | None = None, end_time: int | None = None) -> pd.DataFrame:
+        # BingX enforces max 1440 candles per request; paginate backward for larger history.
+        max_limit = 1440
+        requested_limit = max(1, int(limit))
+        remaining = requested_limit
+        cursor_end = int(end_time) if end_time is not None else None
+        collected_rows: list = []
+
+        while remaining > 0:
+            chunk_limit = min(max_limit, remaining)
+            params = {"symbol": symbol, "interval": interval, "limit": chunk_limit}
+            if start_time is not None:
+                params["startTime"] = int(start_time)
+            if cursor_end is not None:
+                params["endTime"] = int(cursor_end)
+
+            raw = await self._request("GET", SWAP_KLINES, params=params, signed=False)
+            rows = self._extract_kline_rows(raw)
+            if not rows:
+                break
+
+            collected_rows.extend(rows)
+            remaining -= len(rows)
+
+            ts_values = [self._row_timestamp_ms(row) for row in rows]
+            ts_values = [x for x in ts_values if x is not None]
+            if not ts_values:
+                break
+            oldest_ts = min(ts_values)
+
+            if len(rows) < chunk_limit:
+                break
+            next_end = oldest_ts - 1
+            if start_time is not None and next_end < int(start_time):
+                break
+            if cursor_end is not None and next_end >= cursor_end:
+                break
+            cursor_end = next_end
+
+        frame = self._rows_to_klines_frame(collected_rows)
+        if frame.empty:
+            return frame
+
+        if start_time is not None:
+            start_dt = pd.to_datetime(int(start_time), unit="ms", utc=True)
+            frame = frame[frame.index >= start_dt]
+        if end_time is not None:
+            end_dt = pd.to_datetime(int(end_time), unit="ms", utc=True)
+            frame = frame[frame.index <= end_dt]
+        if len(frame) > requested_limit:
+            frame = frame.tail(requested_limit)
         return frame
 
     @staticmethod

@@ -321,6 +321,8 @@ class BacktestEngine:
 
         runtime_settings = self._build_runtime_settings(self.settings, profile, ltf_timeframe, "4h")
         runtime_settings.crt_entry_timeframes = [ltf_timeframe]
+        # Backtest evaluates signal quality on full history; killzone can be tested separately via runtime config.
+        runtime_settings.crt_killzone_enabled = False
         warmup = max(30, runtime_settings.swing_lookback * 6, runtime_settings.crt_range_lookback + 2)
 
         async def provider(idx: int, row_time: datetime, _: RiskManager) -> TradeSetup | None:

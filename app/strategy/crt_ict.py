@@ -77,30 +77,56 @@ def _extract_liquidity_levels(ltf_df: pd.DataFrame, settings: Settings) -> tuple
 
 
 def _check_mss_confirmation(ltf_df: pd.DataFrame, settings: Settings, expected_direction: Literal["LONG", "SHORT"]) -> bool:
-    swings = find_swing_points(ltf_df, settings.swing_lookback)
-    trend = determine_trend(swings)
-    choch = detect_choch(ltf_df, swings, trend)
-    if not choch:
+    # Use a recent window to avoid stale first-crossing artifacts and confirm a fresh shift.
+    recent_bars = max(2, int(settings.crt_mss_lookback))
+    window_size = max(40, recent_bars * 12, settings.swing_lookback * 10)
+    window = ltf_df.tail(window_size)
+    if len(window) < settings.swing_lookback * 3 + 6:
         return False
-    last_break = choch[-1]
-    if expected_direction == "LONG" and last_break.direction != "BULLISH":
+
+    swings = find_swing_points(window, settings.swing_lookback)
+    if len(swings) < 4:
         return False
-    if expected_direction == "SHORT" and last_break.direction != "BEARISH":
+
+    closes = window["close"]
+    recent_closes = closes.tail(recent_bars + 1)
+    if len(recent_closes) < 2:
         return False
-    idx = ltf_df.index.get_indexer([pd.Timestamp(last_break.timestamp)], method="nearest")[0]
-    min_idx = max(0, len(ltf_df) - 1 - settings.crt_mss_lookback)
-    return idx >= min_idx
+
+    if expected_direction == "LONG":
+        levels = [s.price for s in swings if s.type in {"LH", "HH"}]
+        if not levels:
+            return False
+        level = float(levels[-1])
+        crossed = any(
+            float(recent_closes.iloc[i - 1]) <= level < float(recent_closes.iloc[i])
+            for i in range(1, len(recent_closes))
+        )
+        return crossed
+
+    levels = [s.price for s in swings if s.type in {"HL", "LL"}]
+    if not levels:
+        return False
+    level = float(levels[-1])
+    crossed = any(
+        float(recent_closes.iloc[i - 1]) >= level > float(recent_closes.iloc[i])
+        for i in range(1, len(recent_closes))
+    )
+    return crossed
 
 
 def _check_ob_confirmation(ltf_df: pd.DataFrame, settings: Settings, expected_direction: Literal["LONG", "SHORT"]) -> bool:
-    swings = find_swing_points(ltf_df, settings.swing_lookback)
+    window = ltf_df.tail(max(120, settings.ob_max_age_candles * 2))
+    swings = find_swing_points(window, settings.swing_lookback)
     trend = determine_trend(swings)
-    structure = detect_bos(ltf_df, swings, trend) + detect_choch(ltf_df, swings, trend)
+    structure = detect_bos(window, swings, trend) + detect_choch(window, swings, trend)
+    if not structure:
+        return False
     direction = "BULLISH" if expected_direction == "LONG" else "BEARISH"
     active_obs = [
         x
-        for x in find_order_blocks(ltf_df, structure, max_age=settings.ob_max_age_candles)
-        if x.type == direction and not check_ob_mitigation(x, ltf_df)
+        for x in find_order_blocks(window, structure, max_age=settings.ob_max_age_candles)
+        if x.type == direction and not check_ob_mitigation(x, window)
     ]
     return bool(active_obs)
 
