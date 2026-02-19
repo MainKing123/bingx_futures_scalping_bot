@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from loguru import logger
 
 from app.api.router import router as api_router
@@ -71,6 +72,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="SMC/ICT Crypto Scanner", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["*"], allow_headers=["*"])
 app.include_router(api_router)
+
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/docs")
 
 
 @app.websocket("/ws")
