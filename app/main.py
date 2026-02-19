@@ -12,6 +12,7 @@ from app.api.router import router as api_router
 from app.api.ws_manager import WSManager
 from app.config import Settings
 from app.db.migrations import init_db
+from app.execution.executor import AutoExecutor
 from app.exchange.client import BingXClient
 from app.exchange.ws_stream import BingXKlineStream
 from app.notifications.telegram import TelegramNotifier
@@ -29,12 +30,14 @@ async def lifespan(app: FastAPI):
     await init_db()
     client = BingXClient(settings)
     kline_stream = BingXKlineStream()
-    engine = SMCEngine(client, settings)
-    scanner = PairScanner(client, kline_stream, engine, settings)
     risk_manager = RiskManager(settings)
-    tracker = TradeTracker(client, ws_manager)
     notifier = TelegramNotifier(settings)
+    tracker = TradeTracker(client, ws_manager, settings, risk_manager, notifier)
+    engine = SMCEngine(client, settings, risk_manager)
+    executor = AutoExecutor(client, settings)
+    scanner = PairScanner(client, kline_stream, engine, settings, ws_manager, risk_manager, notifier, tracker, executor)
 
+    app.state.settings = settings
     app.state.client = client
     app.state.stream = kline_stream
     app.state.engine = engine
@@ -42,6 +45,7 @@ async def lifespan(app: FastAPI):
     app.state.risk_manager = risk_manager
     app.state.tracker = tracker
     app.state.notifier = notifier
+    app.state.executor = executor
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(scanner.scan, "interval", seconds=settings.scan_interval_seconds)

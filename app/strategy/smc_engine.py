@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.config import Settings
 from app.exchange.client import BingXClient
+from app.risk.risk_manager import RiskManager
 from app.schemas.setup import MarketOverview, SymbolAnalysis, TradeSetup
 from app.strategy.fvg import find_fvg
 from app.strategy.market_structure import detect_bos, detect_choch, determine_trend, find_swing_points
@@ -10,9 +11,10 @@ from app.strategy.order_blocks import find_order_blocks
 
 
 class SMCEngine:
-    def __init__(self, client: BingXClient, settings: Settings):
+    def __init__(self, client: BingXClient, settings: Settings, risk_manager: RiskManager):
         self.client = client
         self.settings = settings
+        self.risk_manager = risk_manager
 
     async def analyze_symbol(self, symbol: str) -> SymbolAnalysis:
         df = await self.client.get_klines(symbol, self.settings.htf_timeframe, 200)
@@ -25,7 +27,7 @@ class SMCEngine:
 
     async def check_for_setup(self, symbol: str) -> TradeSetup | None:
         htf = await analyze_htf(self.client, symbol)
-        return await find_ltf_entry(self.client, symbol, htf)
+        return await find_ltf_entry(self.client, symbol, htf, self.settings, self.risk_manager)
 
     async def get_market_overview(self, symbol: str) -> MarketOverview:
         analysis = await self.analyze_symbol(symbol)

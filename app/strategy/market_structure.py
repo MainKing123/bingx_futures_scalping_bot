@@ -11,8 +11,8 @@ def find_swing_points(df: pd.DataFrame, lookback: int = 3) -> list[SwingPoint]:
     lows = df["low"]
     roll_max = highs.rolling(2 * lookback + 1, center=True).max()
     roll_min = lows.rolling(2 * lookback + 1, center=True).min()
-    swing_high_idx = (highs == roll_max)
-    swing_low_idx = (lows == roll_min)
+    swing_high_idx = highs.eq(roll_max)
+    swing_low_idx = lows.eq(roll_min)
     swings: list[SwingPoint] = []
     last_high = None
     last_low = None
@@ -46,29 +46,40 @@ def determine_trend(swings: list[SwingPoint]) -> Trend:
     return Trend(direction=TrendDirection.RANGING)
 
 
+def _first_crossing(df: pd.DataFrame, level: float, direction: str) -> tuple[pd.Timestamp, float] | None:
+    if direction == "above":
+        hits = df[df["close"] > level]
+    else:
+        hits = df[df["close"] < level]
+    if hits.empty:
+        return None
+    ts = hits.index[0]
+    return ts, float(hits.iloc[0]["close"])
+
+
 def detect_bos(df: pd.DataFrame, swings: list[SwingPoint], trend: Trend) -> list[StructureBreak]:
-    out: list[StructureBreak] = []
-    closes = df["close"]
     if trend.direction == TrendDirection.BULLISH and trend.last_swing_high is not None:
-        hits = closes[closes > trend.last_swing_high]
-        out.extend([StructureBreak(timestamp=ts.to_pydatetime(), price=float(v), type="BOS", direction="BULLISH") for ts, v in hits.items()])
+        hit = _first_crossing(df, trend.last_swing_high, "above")
+        if hit:
+            return [StructureBreak(timestamp=hit[0].to_pydatetime(), price=hit[1], type="BOS", direction="BULLISH")]
     if trend.direction == TrendDirection.BEARISH and trend.last_swing_low is not None:
-        hits = closes[closes < trend.last_swing_low]
-        out.extend([StructureBreak(timestamp=ts.to_pydatetime(), price=float(v), type="BOS", direction="BEARISH") for ts, v in hits.items()])
-    return out[-3:]
+        hit = _first_crossing(df, trend.last_swing_low, "below")
+        if hit:
+            return [StructureBreak(timestamp=hit[0].to_pydatetime(), price=hit[1], type="BOS", direction="BEARISH")]
+    return []
 
 
 def detect_choch(df: pd.DataFrame, swings: list[SwingPoint], trend: Trend) -> list[StructureBreak]:
-    out: list[StructureBreak] = []
-    closes = df["close"]
     if trend.direction == TrendDirection.BEARISH:
         lvl = max((s.price for s in swings if s.type == "LH"), default=None)
         if lvl is not None:
-            hits = closes[closes > lvl]
-            out.extend([StructureBreak(timestamp=ts.to_pydatetime(), price=float(v), type="CHOCH", direction="BULLISH") for ts, v in hits.items()])
+            hit = _first_crossing(df, lvl, "above")
+            if hit:
+                return [StructureBreak(timestamp=hit[0].to_pydatetime(), price=hit[1], type="CHOCH", direction="BULLISH")]
     if trend.direction == TrendDirection.BULLISH:
         lvl = min((s.price for s in swings if s.type == "HL"), default=None)
         if lvl is not None:
-            hits = closes[closes < lvl]
-            out.extend([StructureBreak(timestamp=ts.to_pydatetime(), price=float(v), type="CHOCH", direction="BEARISH") for ts, v in hits.items()])
-    return out[-3:]
+            hit = _first_crossing(df, lvl, "below")
+            if hit:
+                return [StructureBreak(timestamp=hit[0].to_pydatetime(), price=hit[1], type="CHOCH", direction="BEARISH")]
+    return []

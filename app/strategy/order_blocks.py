@@ -34,5 +34,6 @@ def check_ob_mitigation(ob: OrderBlock, df: pd.DataFrame) -> bool:
     after = df[df.index > pd.Timestamp(ob.timestamp)]
     if after.empty:
         return False
-    inside = (after["close"] >= ob.zone_low) & (after["close"] <= ob.zone_high)
-    return bool(inside.any())
+    if ob.type == "BULLISH":
+        return bool((after["close"] < ob.zone_low).any())
+    return bool((after["close"] > ob.zone_high).any())

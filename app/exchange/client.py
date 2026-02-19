@@ -11,7 +11,20 @@ import pandas as pd
 from loguru import logger
 
 from app.config import Settings
-from app.exchange.endpoints import *
+from app.exchange.endpoints import (
+    BASE_URL,
+    SWAP_BALANCE,
+    SWAP_CANCEL,
+    SWAP_CONTRACTS,
+    SWAP_DEPTH,
+    SWAP_KLINES,
+    SWAP_LEVERAGE,
+    SWAP_OPEN_INTEREST,
+    SWAP_ORDER,
+    SWAP_POSITIONS,
+    SWAP_PREMIUM_INDEX,
+    SWAP_TICKER,
+)
 
 
 class BingXAPIError(Exception):
@@ -77,13 +90,23 @@ class BingXClient:
         frame = frame.set_index("timestamp").sort_index()
         return frame
 
-    async def get_contracts(self) -> list[dict]: return await self._request("GET", SWAP_CONTRACTS, signed=False)
-    async def get_tickers(self) -> list[dict]: return await self._request("GET", SWAP_TICKER, signed=False)
+    @staticmethod
+    def _is_tradeable_usdt_symbol(symbol: str) -> bool:
+        excluded = {"USDC-USDT", "BUSD-USDT", "DAI-USDT", "TUSD-USDT", "FDUSD-USDT"}
+        return symbol.endswith("-USDT") and symbol not in excluded
+
+    async def get_contracts(self) -> list[dict]:
+        contracts = await self._request("GET", SWAP_CONTRACTS, signed=False)
+        return [c for c in contracts if self._is_tradeable_usdt_symbol(c.get("symbol", ""))]
+
+    async def get_tickers(self) -> list[dict]:
+        tickers = await self._request("GET", SWAP_TICKER, signed=False)
+        return [t for t in tickers if self._is_tradeable_usdt_symbol(t.get("symbol", ""))]
     async def get_ticker(self, symbol: str) -> dict: return await self._request("GET", SWAP_TICKER, {"symbol": symbol}, signed=False)
 
     async def get_top_symbols(self, limit: int = 30, min_volume_usd: float = 10_000_000) -> list[str]:
         tickers = await self.get_tickers()
-        items = [t for t in tickers if float(t.get("quoteVolume", 0)) > min_volume_usd]
+        items = [t for t in tickers if float(t.get("quoteVolume") or 0) > min_volume_usd]
         items.sort(key=lambda x: float(x.get("quoteVolume", 0)), reverse=True)
         return [item["symbol"] for item in items[:limit]]
 

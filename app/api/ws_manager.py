@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from fastapi import WebSocket
+from loguru import logger
 
 
 class WSManager:
@@ -20,4 +21,8 @@ class WSManager:
     async def broadcast(self, event: str, data: dict):
         payload = {"event": event, "data": data, "timestamp": datetime.now(timezone.utc).isoformat()}
         for ws in list(self.connections):
-            await ws.send_json(payload)
+            try:
+                await ws.send_json(payload)
+            except Exception as exc:
+                logger.warning(f"Removing dead ws connection: {exc}")
+                self.disconnect(ws)
