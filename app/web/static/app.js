@@ -16,6 +16,7 @@ const state = {
   currentBacktestJobId: null,
   backtestPollTimer: null,
   latestBacktest: null,
+  latestAnalysis: null,
 };
 
 const els = {
@@ -45,6 +46,7 @@ const els = {
   selectedSetupCard: document.getElementById("selectedSetupCard"),
   backtestForm: document.getElementById("backtestForm"),
   backtestMode: document.getElementById("backtestMode"),
+  backtestStrategy: document.getElementById("backtestStrategy"),
   backtestSymbol: document.getElementById("backtestSymbol"),
   backtestLookbackDays: document.getElementById("backtestLookbackDays"),
   backtestProfile: document.getElementById("backtestProfile"),
@@ -60,6 +62,16 @@ const els = {
   btProfitFactor: document.getElementById("btProfitFactor"),
   btMaxDD: document.getElementById("btMaxDD"),
   backtestResultsBody: document.getElementById("backtestResultsBody"),
+  analysisSignalBadge: document.getElementById("analysisSignalBadge"),
+  analysisLiquidity: document.getElementById("analysisLiquidity"),
+  analysisCRT: document.getElementById("analysisCRT"),
+  analysisICT: document.getElementById("analysisICT"),
+  analysisSession: document.getElementById("analysisSession"),
+  analysisSignal: document.getElementById("analysisSignal"),
+  analysisEntry: document.getElementById("analysisEntry"),
+  analysisStop: document.getElementById("analysisStop"),
+  analysisTargets: document.getElementById("analysisTargets"),
+  analysisRR: document.getElementById("analysisRR"),
 };
 
 function setWsBadge(connected) {
@@ -332,6 +344,51 @@ function renderTradingView() {
   els.tvOpenLink.href = tvExternalUrl(symbol, state.tvInterval);
 }
 
+function renderAnalysisCard(analysis) {
+  if (!analysis) {
+    els.analysisSignalBadge.textContent = "NO_SIGNAL";
+    els.analysisLiquidity.textContent = "-";
+    els.analysisCRT.textContent = "-";
+    els.analysisICT.textContent = "-";
+    els.analysisSession.textContent = "-";
+    els.analysisSignal.textContent = "NO_SIGNAL";
+    els.analysisEntry.textContent = "-";
+    els.analysisStop.textContent = "-";
+    els.analysisTargets.textContent = "-";
+    els.analysisRR.textContent = "-";
+    return;
+  }
+
+  els.analysisSignalBadge.textContent = analysis.signal || "NO_SIGNAL";
+  els.analysisLiquidity.textContent = analysis?.liquidity?.summary || "-";
+  els.analysisCRT.textContent = analysis?.crt?.summary || "-";
+  els.analysisICT.textContent = analysis?.ict?.summary || "-";
+  els.analysisSession.textContent = analysis?.session?.summary || "-";
+  els.analysisSignal.textContent = analysis.signal || "NO_SIGNAL";
+  els.analysisEntry.textContent = analysis.entry == null ? "-" : safeNum(analysis.entry, 4);
+  els.analysisStop.textContent = analysis.stop == null ? "-" : safeNum(analysis.stop, 4);
+  const targets = Array.isArray(analysis.targets) && analysis.targets.length
+    ? analysis.targets.map((x) => safeNum(x, 4)).join(" / ")
+    : "-";
+  els.analysisTargets.textContent = targets;
+  els.analysisRR.textContent = analysis.rr == null ? "-" : safeNum(analysis.rr, 2);
+}
+
+async function loadAnalysis(symbol) {
+  try {
+    const res = await fetch(`/api/analysis/${encodeURIComponent(symbol)}`);
+    if (!res.ok) {
+      throw new Error("analysis unavailable");
+    }
+    const analysis = await res.json();
+    state.latestAnalysis = analysis;
+    renderAnalysisCard(analysis);
+  } catch (_) {
+    state.latestAnalysis = null;
+    renderAnalysisCard(null);
+  }
+}
+
 async function resolveTradingViewSymbol(symbol) {
   try {
     const res = await fetch(`/api/tradingview/symbol/${encodeURIComponent(symbol)}`);
@@ -360,7 +417,7 @@ async function selectSetup(setupId) {
   state.selectedSetupId = setup.id;
   renderSetups();
   renderSelectedSetupCard(setup);
-  await resolveTradingViewSymbol(setup.symbol);
+  await Promise.all([resolveTradingViewSymbol(setup.symbol), loadAnalysis(setup.symbol)]);
 }
 
 function renderBacktestSummary(summary) {
@@ -470,6 +527,7 @@ async function runBacktest(event) {
   const symbol = els.backtestSymbol.value.trim().toUpperCase();
   const payload = {
     mode,
+    strategy: els.backtestStrategy.value,
     symbol: mode === "single" ? symbol : undefined,
     lookback_days: Number(els.backtestLookbackDays.value || 14),
     profile: els.backtestProfile.value,
@@ -554,6 +612,7 @@ async function loadData() {
         state.tvCandidates = [];
         renderSelectedSetupCard(null);
         renderTradingView();
+        renderAnalysisCard(null);
       } else {
         renderSetups();
       }
@@ -603,12 +662,19 @@ function connectWs() {
 
   ws.onmessage = (event) => {
     try {
-      const payload = JSON.parse(event.data);
+    const payload = JSON.parse(event.data);
       const eventName = payload.event || "event";
       const symbol = payload?.data?.symbol ? ` ${payload.data.symbol}` : "";
       addEvent(`${eventName}${symbol}`);
       if (payload.event === "backtest_job_update" && payload.data?.job_id === state.currentBacktestJobId) {
         void pollBacktestJob();
+      }
+      if (payload.event === "analysis_report" && state.selectedSetupId) {
+        const selected = state.setups.find((x) => x.id === state.selectedSetupId);
+        if (selected && payload.data?.symbol === selected.symbol) {
+          state.latestAnalysis = payload.data;
+          renderAnalysisCard(payload.data);
+        }
       }
     } catch (_) {
       addEvent("WebSocket message received");
@@ -688,6 +754,7 @@ async function init() {
   connectWs();
   renderSelectedSetupCard(null);
   renderTradingView();
+  renderAnalysisCard(null);
   await Promise.all([loadData(), loadLatestBacktest()]);
 }
 

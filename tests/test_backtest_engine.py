@@ -30,7 +30,7 @@ class FakeClient:
         self.htf_df = htf_df if htf_df is not None else ltf_df
 
     async def get_klines(self, symbol: str, interval: str, limit: int = 500, start_time: int | None = None, end_time: int | None = None):
-        return self.htf_df.copy() if interval == "30m" else self.ltf_df.copy()
+        return self.htf_df.copy() if interval in {"30m", "4h", "1d"} else self.ltf_df.copy()
 
 
 def _setup_provider(stop_loss: float = 98.0):
@@ -134,5 +134,50 @@ def test_fee_and_slippage_reduce_expectancy():
             cooldown_candles=0,
         )
         assert high_cost.expectancy < low_cost.expectancy
+
+    asyncio.run(run())
+
+
+def test_crt_ict_no_lookahead_entry_is_next_bar_open(monkeypatch):
+    async def run():
+        async def fake_signal(*args, **kwargs):
+            return None
+
+        def fake_analyze(symbol, ltf_df, htf_4h_df, htf_1d_df, settings, now):
+            if len(ltf_df) == 31:
+                setup = TradeSetup(
+                    timestamp=now,
+                    symbol=symbol,
+                    direction="LONG",
+                    setup_type="CRT_ICT",
+                    htf_bias="BULLISH",
+                    entry=100.0,
+                    stop_loss=98.0,
+                    take_profits=[110.0, 112.0, 114.0],
+                    risk_reward=3.0,
+                    confidence="HIGH",
+                    confluences=["CRT", "MSS"],
+                    position_size_usdt=100.0,
+                )
+                return None, setup
+            return None, None
+
+        monkeypatch.setattr("app.backtest.engine.analyze_crt_ict_from_df", fake_analyze)
+
+        engine = BacktestEngine(FakeClient(_make_df("tp")), Settings(), signal_provider=fake_signal)
+        result = await engine.run_symbol(
+            "BTC-USDT",
+            lookback_days=1,
+            ltf_timeframe="5m",
+            htf_timeframe="4h",
+            profile=_profile(),
+            fee_bps=0.0,
+            slippage_bps=0.0,
+            cooldown_candles=0,
+            strategy="crt_ict",
+        )
+        assert result.trades_count == 1
+        assert result.trade_log[0].entry_time == _make_df("tp").index[31].to_pydatetime()
+        assert result.trade_log[0].status == "TP1_HIT"
 
     asyncio.run(run())

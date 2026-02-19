@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, model_validator
 
 class BacktestRunRequest(BaseModel):
     mode: Literal["single", "batch"] = "single"
+    strategy: Literal["legacy_choch_ob", "crt_ict"] = "crt_ict"
     symbol: str | None = None
     lookback_days: int | None = None
     ltf_timeframe: str | None = None
@@ -48,10 +49,12 @@ class BacktestSymbolResult(BaseModel):
 class BacktestSummary(BaseModel):
     job_id: str
     mode: Literal["single", "batch"]
+    strategy: str
     profile: str
     lookback_days: int
     ltf_timeframe: str
     htf_timeframe: str
+    htf_context: str
     universe: list[str]
     started_at: datetime
     finished_at: datetime
@@ -70,6 +73,7 @@ class BacktestRunStatusResponse(BaseModel):
     job_id: str
     status: Literal["queued", "running", "completed", "failed"]
     mode: Literal["single", "batch"]
+    strategy: str
     profile: str
     progress: float
     created_at: datetime

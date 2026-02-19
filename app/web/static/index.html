@@ -139,6 +139,24 @@
           </div>
         </section>
 
+        <section class="panel analysis-panel">
+          <div class="panel-header">
+            <h2>CRT+ICT Analysis</h2>
+            <span id="analysisSignalBadge" class="pill">NO_SIGNAL</span>
+          </div>
+          <div id="crtAnalysisCard" class="analysis-card">
+            <div class="analysis-line"><span>Ликвидность</span><strong id="analysisLiquidity">-</strong></div>
+            <div class="analysis-line"><span>CRT</span><strong id="analysisCRT">-</strong></div>
+            <div class="analysis-line"><span>ICT</span><strong id="analysisICT">-</strong></div>
+            <div class="analysis-line"><span>Сессия</span><strong id="analysisSession">-</strong></div>
+            <div class="analysis-line"><span>Сигнал</span><strong id="analysisSignal">NO_SIGNAL</strong></div>
+            <div class="analysis-line"><span>Вход</span><strong id="analysisEntry">-</strong></div>
+            <div class="analysis-line"><span>Стоп</span><strong id="analysisStop">-</strong></div>
+            <div class="analysis-line"><span>Цели</span><strong id="analysisTargets">-</strong></div>
+            <div class="analysis-line"><span>RR</span><strong id="analysisRR">-</strong></div>
+          </div>
+        </section>
+
         <section class="panel volatile-panel">
           <div class="panel-header">
             <h2>Top Volatile Pairs</h2>
@@ -171,6 +189,13 @@
       </div>
 
       <form id="backtestForm" class="strategy-form">
+        <label>
+          <span>Strategy</span>
+          <select id="backtestStrategy">
+            <option value="crt_ict">CRT+ICT</option>
+            <option value="legacy_choch_ob">Legacy CHOCH_OB</option>
+          </select>
+        </label>
         <label>
           <span>Mode</span>
           <select id="backtestMode">

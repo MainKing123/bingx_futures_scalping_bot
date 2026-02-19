@@ -42,7 +42,7 @@ class TradeSetup(BaseModel):
     timestamp: datetime
     symbol: str
     direction: Literal["LONG", "SHORT"]
-    setup_type: Literal["BOS_OB", "CHOCH_OB", "FVG_ENTRY", "LIQUIDITY_SWEEP"]
+    setup_type: Literal["BOS_OB", "CHOCH_OB", "FVG_ENTRY", "LIQUIDITY_SWEEP", "CRT_ICT"]
     htf_bias: Literal["BULLISH", "BEARISH"]
     entry: float
     stop_loss: float

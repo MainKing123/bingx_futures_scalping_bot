@@ -57,38 +57,72 @@ class PairScanner:
         self.sem = asyncio.Semaphore(5)
         self.kline_stream.on_kline_close(self._on_kline_close)
 
+    def _stream_timeframe(self) -> str:
+        mode = getattr(self.settings, "strategy_live_mode", "legacy")
+        if mode in {"crt_shadow", "crt_live"}:
+            allowed = list(self.settings.crt_entry_timeframes or ["5m", "15m"])
+            return allowed[0]
+        return self.settings.ltf_timeframe
+
+    async def _publish_setup(self, setup):
+        async with SessionLocal() as session:
+            await save_setup(session, setup)
+            await increment_daily_stats(session, setup)
+        await self.ws_manager.broadcast("new_setup", setup.model_dump())
+        await self.notifier.send_setup(setup)
+        await self.trade_tracker.add(setup)
+        if self.executor is not None and self.settings.auto_execution:
+            await self.executor.execute_setup(setup)
+        self.risk_manager.open_setups += 1
+        logger.info(f"New setup detected for {setup.symbol}: {setup.id}")
+
     async def _add_to_watchlist(self, symbol: str, htf: HTFAnalysis, zone: tuple[float, float]):
         if symbol in self.watchlist:
             self.watchlist[symbol].last_checked = datetime.now(timezone.utc)
             return
         self.watchlist[symbol] = WatchlistEntry(symbol=symbol, htf_analysis=htf, poi_zone=zone)
-        await self.kline_stream.subscribe(symbol, self.settings.ltf_timeframe)
+        await self.kline_stream.subscribe(symbol, self._stream_timeframe())
         await self.ws_manager.broadcast("watchlist_update", {"symbol": symbol, "action": "added", "poi_zone": zone})
 
     async def _remove_from_watchlist(self, symbol: str, reason: str):
         if symbol not in self.watchlist:
             return
         self.watchlist.pop(symbol, None)
-        await self.kline_stream.unsubscribe(symbol, self.settings.ltf_timeframe)
+        await self.kline_stream.unsubscribe(symbol, self._stream_timeframe())
         await self.ws_manager.broadcast("watchlist_update", {"symbol": symbol, "action": "removed", "reason": reason})
 
     async def _on_kline_close(self, symbol: str, interval: str, candle: dict):
-        if interval != self.settings.ltf_timeframe or symbol not in self.watchlist:
+        if interval != self._stream_timeframe() or symbol not in self.watchlist:
             return
         try:
-            setup = await self.engine.check_for_setup(symbol)
-            if setup is None:
+            mode = getattr(self.settings, "strategy_live_mode", "legacy")
+            analysis = None
+            crt_setup = None
+            if mode in {"crt_shadow", "crt_live"}:
+                analysis, crt_setup = await self.engine.analyze_crt_ict(symbol)
+                await self.ws_manager.broadcast("analysis_report", analysis.model_dump())
+
+            if mode == "legacy":
+                legacy_setup = await self.engine.check_for_setup_legacy(symbol)
+                if legacy_setup is None:
+                    return
+                await self._publish_setup(legacy_setup)
                 return
-            async with SessionLocal() as session:
-                await save_setup(session, setup)
-                await increment_daily_stats(session, setup)
-            await self.ws_manager.broadcast("new_setup", setup.model_dump())
-            await self.notifier.send_setup(setup)
-            await self.trade_tracker.add(setup)
-            if self.executor is not None and self.settings.auto_execution:
-                await self.executor.execute_setup(setup)
-            self.risk_manager.open_setups += 1
-            logger.info(f"New setup detected for {symbol}: {setup.id}")
+
+            if mode == "crt_shadow":
+                legacy_setup = await self.engine.check_for_setup_legacy(symbol)
+                if legacy_setup is not None:
+                    await self._publish_setup(legacy_setup)
+                return
+
+            if mode == "crt_live":
+                if crt_setup is None:
+                    return
+                if not self.risk_manager.can_open_setup():
+                    logger.info(f"Risk guard blocked CRT setup for {symbol}")
+                    return
+                await self._publish_setup(crt_setup)
+                return
         except Exception as exc:
             logger.exception(f"Failed processing kline close for {symbol}: {exc}")
 

@@ -7,6 +7,7 @@ from app.backtest.schemas import BacktestRunRequest, BacktestRunStatusResponse, 
 from app.db.engine import SessionLocal
 from app.db.models import DailyStats, SetupRecord
 from app.db.repository import aggregate_stats, record_to_setup, setups_query, update_setup_status
+from app.schemas.analysis import CRTICTAnalysisResponse
 from app.schemas.setup import MarketOverview, TradeSetup
 from app.tradingview import symbol_to_tv_candidates, timeframe_to_tv_interval
 
@@ -92,6 +93,15 @@ async def resolve_tradingview_symbol(symbol: str, request: Request):
     }
 
 
+@router.get("/analysis/{symbol}", response_model=CRTICTAnalysisResponse)
+async def get_crt_analysis(symbol: str, request: Request, ltf_timeframe: str | None = None):
+    requested_tf = (ltf_timeframe or "").lower()
+    if requested_tf and requested_tf not in {"5m", "15m"}:
+        raise HTTPException(status_code=422, detail="ltf_timeframe must be one of: 5m, 15m")
+    analysis, _ = await request.app.state.engine.analyze_crt_ict(symbol.upper(), requested_tf or None)
+    return analysis
+
+
 @router.get("/market-structure/{symbol}", response_model=MarketOverview)
 async def get_market_structure(symbol: str, request: Request):
     return await request.app.state.engine.get_market_overview(symbol)
@@ -148,10 +158,22 @@ async def get_config(request: Request):
         "volatility_lookback_candles": settings.volatility_lookback_candles,
         "volatility_interval": settings.volatility_interval,
         "max_poi_distance_pct": settings.max_poi_distance_pct,
+        "strategy_live_mode": settings.strategy_live_mode,
         "risk_per_trade_percent": settings.risk_per_trade_percent,
         "max_open_setups": settings.max_open_setups,
         "daily_loss_limit_percent": settings.daily_loss_limit_percent,
         "active_sessions": settings.active_sessions,
+        "crt_killzone_enabled": settings.crt_killzone_enabled,
+        "crt_london_session": settings.crt_london_session,
+        "crt_new_york_session": settings.crt_new_york_session,
+        "crt_range_lookback": settings.crt_range_lookback,
+        "crt_min_sweep_pct": settings.crt_min_sweep_pct,
+        "crt_min_wick_body_ratio": settings.crt_min_wick_body_ratio,
+        "crt_equal_level_tolerance": settings.crt_equal_level_tolerance,
+        "crt_mss_lookback": settings.crt_mss_lookback,
+        "crt_stop_buffer_bps": settings.crt_stop_buffer_bps,
+        "crt_min_rr": settings.crt_min_rr,
+        "crt_entry_timeframes": settings.crt_entry_timeframes,
         "auto_execution": settings.auto_execution,
         "backtest_fee_bps": settings.backtest_fee_bps,
         "backtest_slippage_bps": settings.backtest_slippage_bps,
@@ -171,10 +193,22 @@ async def update_config(updates: dict, request: Request):
         "volatility_lookback_candles",
         "volatility_interval",
         "max_poi_distance_pct",
+        "strategy_live_mode",
         "risk_per_trade_percent",
         "max_open_setups",
         "daily_loss_limit_percent",
         "active_sessions",
+        "crt_killzone_enabled",
+        "crt_london_session",
+        "crt_new_york_session",
+        "crt_range_lookback",
+        "crt_min_sweep_pct",
+        "crt_min_wick_body_ratio",
+        "crt_equal_level_tolerance",
+        "crt_mss_lookback",
+        "crt_stop_buffer_bps",
+        "crt_min_rr",
+        "crt_entry_timeframes",
         "min_risk_reward",
         "backtest_fee_bps",
         "backtest_slippage_bps",

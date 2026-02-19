@@ -11,12 +11,14 @@ from app.config import Settings
 from app.exchange.client import BingXClient
 from app.risk.risk_manager import RiskManager
 from app.schemas.setup import TradeSetup
+from app.strategy.crt_ict import analyze_crt_ict_from_df
 from app.strategy.multi_tf import analyze_htf_from_df, find_ltf_entry_from_df
 
 SignalProvider = Callable[
     [str, pd.DataFrame, pd.DataFrame, Settings, RiskManager, datetime],
     Awaitable[TradeSetup | None],
 ]
+SignalAtIndexProvider = Callable[[int, datetime, RiskManager], Awaitable[TradeSetup | None]]
 
 INTERVAL_TO_MINUTES = {
     "1m": 1,
@@ -134,48 +136,45 @@ class BacktestEngine:
             max_dd = max(max_dd, peak - equity)
         return max_dd
 
-    async def run_symbol(
+    @staticmethod
+    def _empty_result(symbol: str) -> BacktestSymbolResult:
+        return BacktestSymbolResult(
+            symbol=symbol,
+            trades_count=0,
+            wins=0,
+            losses=0,
+            win_rate=0.0,
+            expectancy=0.0,
+            profit_factor=0.0,
+            max_drawdown=0.0,
+            total_pnl_percent=0.0,
+        )
+
+    @staticmethod
+    def _build_runtime_settings(base: Settings, profile: StrategyProfile, ltf_timeframe: str, htf_timeframe: str) -> Settings:
+        runtime = base.model_copy(deep=True)
+        runtime.min_risk_reward = profile.min_risk_reward
+        runtime.swing_lookback = profile.swing_lookback
+        runtime.ob_max_age_candles = profile.ob_max_age_candles
+        runtime.min_confluences = profile.min_confluences
+        runtime.max_poi_distance_pct = profile.max_poi_distance_pct
+        runtime.active_sessions = ["all"]
+        runtime.htf_timeframe = htf_timeframe
+        runtime.ltf_timeframe = ltf_timeframe
+        return runtime
+
+    async def _simulate(
         self,
-        symbol: str,
         *,
-        lookback_days: int,
-        ltf_timeframe: str,
-        htf_timeframe: str,
-        profile: StrategyProfile,
+        ltf_df: pd.DataFrame,
+        runtime_settings: Settings,
         fee_bps: float,
         slippage_bps: float,
         cooldown_candles: int,
+        warmup: int,
+        setup_provider: SignalAtIndexProvider,
     ) -> BacktestSymbolResult:
-        ltf_limit = _bars_for_days(lookback_days, ltf_timeframe)
-        htf_limit = _bars_for_days(lookback_days, htf_timeframe)
-        ltf_df = await self.client.get_klines(symbol, interval=ltf_timeframe, limit=ltf_limit)
-        htf_df = await self.client.get_klines(symbol, interval=htf_timeframe, limit=htf_limit)
-
-        if ltf_df.empty or htf_df.empty or len(ltf_df) < 30:
-            return BacktestSymbolResult(
-                symbol=symbol,
-                trades_count=0,
-                wins=0,
-                losses=0,
-                win_rate=0.0,
-                expectancy=0.0,
-                profit_factor=0.0,
-                max_drawdown=0.0,
-                total_pnl_percent=0.0,
-            )
-
-        runtime_settings = self.settings.model_copy(deep=True)
-        runtime_settings.min_risk_reward = profile.min_risk_reward
-        runtime_settings.swing_lookback = profile.swing_lookback
-        runtime_settings.ob_max_age_candles = profile.ob_max_age_candles
-        runtime_settings.min_confluences = profile.min_confluences
-        runtime_settings.max_poi_distance_pct = profile.max_poi_distance_pct
-        runtime_settings.active_sessions = ["all"]
-        runtime_settings.htf_timeframe = htf_timeframe
-        runtime_settings.ltf_timeframe = ltf_timeframe
-
         risk_manager = RiskManager(runtime_settings)
-        warmup = max(25, runtime_settings.swing_lookback * 6)
         cooldown_until_idx = -1
         active_trade: dict | None = None
         trade_log: list[BacktestTradeLogItem] = []
@@ -218,12 +217,7 @@ class BacktestEngine:
             if not risk_manager.can_open_setup():
                 continue
 
-            ltf_slice = ltf_df.iloc[: idx + 1]
-            htf_slice = htf_df[htf_df.index <= ltf_df.index[idx]]
-            if len(htf_slice) < 20:
-                continue
-
-            setup = await self.signal_provider(symbol, ltf_slice, htf_slice, runtime_settings, risk_manager, row_time)
+            setup = await setup_provider(idx, row_time, risk_manager)
             if setup is None:
                 continue
 
@@ -252,7 +246,7 @@ class BacktestEngine:
         max_drawdown = self._max_drawdown(pnl_series)
 
         return BacktestSymbolResult(
-            symbol=symbol,
+            symbol="",
             trades_count=trades_count,
             wins=wins,
             losses=losses,
@@ -262,4 +256,124 @@ class BacktestEngine:
             max_drawdown=round(max_drawdown, 6),
             total_pnl_percent=round(total_pnl, 6),
             trade_log=trade_log,
+        )
+
+    async def run_symbol_legacy(
+        self,
+        symbol: str,
+        *,
+        lookback_days: int,
+        ltf_timeframe: str,
+        htf_timeframe: str,
+        profile: StrategyProfile,
+        fee_bps: float,
+        slippage_bps: float,
+        cooldown_candles: int,
+    ) -> BacktestSymbolResult:
+        ltf_limit = _bars_for_days(lookback_days, ltf_timeframe)
+        htf_limit = _bars_for_days(lookback_days, htf_timeframe)
+        ltf_df = await self.client.get_klines(symbol, interval=ltf_timeframe, limit=ltf_limit)
+        htf_df = await self.client.get_klines(symbol, interval=htf_timeframe, limit=htf_limit)
+        if ltf_df.empty or htf_df.empty or len(ltf_df) < 30:
+            return self._empty_result(symbol)
+
+        runtime_settings = self._build_runtime_settings(self.settings, profile, ltf_timeframe, htf_timeframe)
+        warmup = max(25, runtime_settings.swing_lookback * 6)
+
+        async def provider(idx: int, row_time: datetime, risk_manager: RiskManager) -> TradeSetup | None:
+            ltf_slice = ltf_df.iloc[: idx + 1]
+            htf_slice = htf_df[htf_df.index <= ltf_df.index[idx]]
+            if len(htf_slice) < 20:
+                return None
+            return await self.signal_provider(symbol, ltf_slice, htf_slice, runtime_settings, risk_manager, row_time)
+
+        result = await self._simulate(
+            ltf_df=ltf_df,
+            runtime_settings=runtime_settings,
+            fee_bps=fee_bps,
+            slippage_bps=slippage_bps,
+            cooldown_candles=cooldown_candles,
+            warmup=warmup,
+            setup_provider=provider,
+        )
+        result.symbol = symbol
+        return result
+
+    async def run_symbol_crt_ict(
+        self,
+        symbol: str,
+        *,
+        lookback_days: int,
+        ltf_timeframe: str,
+        profile: StrategyProfile,
+        fee_bps: float,
+        slippage_bps: float,
+        cooldown_candles: int,
+    ) -> BacktestSymbolResult:
+        ltf_limit = _bars_for_days(lookback_days, ltf_timeframe)
+        htf_4h_limit = _bars_for_days(lookback_days, "4h", extra=120)
+        htf_1d_limit = _bars_for_days(lookback_days, "1d", extra=60)
+        ltf_df = await self.client.get_klines(symbol, interval=ltf_timeframe, limit=ltf_limit)
+        htf_4h_df = await self.client.get_klines(symbol, interval="4h", limit=htf_4h_limit)
+        htf_1d_df = await self.client.get_klines(symbol, interval="1d", limit=htf_1d_limit)
+        if ltf_df.empty or htf_4h_df.empty or htf_1d_df.empty or len(ltf_df) < 40:
+            return self._empty_result(symbol)
+
+        runtime_settings = self._build_runtime_settings(self.settings, profile, ltf_timeframe, "4h")
+        runtime_settings.crt_entry_timeframes = [ltf_timeframe]
+        warmup = max(30, runtime_settings.swing_lookback * 6, runtime_settings.crt_range_lookback + 2)
+
+        async def provider(idx: int, row_time: datetime, _: RiskManager) -> TradeSetup | None:
+            ltf_slice = ltf_df.iloc[: idx + 1]
+            htf_4h_slice = htf_4h_df[htf_4h_df.index <= ltf_df.index[idx]]
+            htf_1d_slice = htf_1d_df[htf_1d_df.index <= ltf_df.index[idx]]
+            if len(htf_4h_slice) < 20 or len(htf_1d_slice) < 20:
+                return None
+            _, setup = analyze_crt_ict_from_df(symbol, ltf_slice, htf_4h_slice, htf_1d_slice, runtime_settings, row_time)
+            return setup
+
+        result = await self._simulate(
+            ltf_df=ltf_df,
+            runtime_settings=runtime_settings,
+            fee_bps=fee_bps,
+            slippage_bps=slippage_bps,
+            cooldown_candles=cooldown_candles,
+            warmup=warmup,
+            setup_provider=provider,
+        )
+        result.symbol = symbol
+        return result
+
+    async def run_symbol(
+        self,
+        symbol: str,
+        *,
+        lookback_days: int,
+        ltf_timeframe: str,
+        htf_timeframe: str,
+        profile: StrategyProfile,
+        fee_bps: float,
+        slippage_bps: float,
+        cooldown_candles: int,
+        strategy: str = "legacy_choch_ob",
+    ) -> BacktestSymbolResult:
+        if strategy == "crt_ict":
+            return await self.run_symbol_crt_ict(
+                symbol,
+                lookback_days=lookback_days,
+                ltf_timeframe=ltf_timeframe,
+                profile=profile,
+                fee_bps=fee_bps,
+                slippage_bps=slippage_bps,
+                cooldown_candles=cooldown_candles,
+            )
+        return await self.run_symbol_legacy(
+            symbol,
+            lookback_days=lookback_days,
+            ltf_timeframe=ltf_timeframe,
+            htf_timeframe=htf_timeframe,
+            profile=profile,
+            fee_bps=fee_bps,
+            slippage_bps=slippage_bps,
+            cooldown_candles=cooldown_candles,
         )

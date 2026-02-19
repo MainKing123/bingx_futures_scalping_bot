@@ -267,6 +267,7 @@ button:hover {
 }
 
 .tv-panel,
+.analysis-panel,
 .watchlist-panel,
 .volatile-panel,
 .events-panel {
@@ -496,6 +497,41 @@ tbody tr:hover {
   background: #fff;
 }
 
+.analysis-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.analysis-line {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+  align-items: baseline;
+  border-bottom: 1px dashed #e7e5dd;
+  padding-bottom: 6px;
+}
+
+.analysis-line:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.analysis-line span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.analysis-line strong {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  word-break: break-word;
+}
+
 #tvFrame {
   width: 100%;
   min-height: 360px;
@@ -509,7 +545,7 @@ tbody tr:hover {
 
 .strategy-form {
   display: grid;
-  grid-template-columns: repeat(6, minmax(140px, 1fr));
+  grid-template-columns: repeat(7, minmax(140px, 1fr));
   gap: 10px;
   margin-bottom: 10px;
 }
@@ -648,6 +684,7 @@ tbody tr:hover {
 
   .setups-panel,
   .tv-panel,
+  .analysis-panel,
   .volatile-panel,
   .watchlist-panel,
   .events-panel,

@@ -71,6 +71,16 @@ class BacktestService:
         lookback = payload.lookback_days if payload.lookback_days is not None else self.settings.backtest_default_lookback_days
         lookback = max(1, min(int(lookback), self.settings.backtest_max_lookback_days))
 
+        if payload.strategy == "crt_ict":
+            allowed = list(self.settings.crt_entry_timeframes or ["5m", "15m"])
+            ltf = (payload.ltf_timeframe or allowed[0]).lower()
+            if ltf not in allowed:
+                ltf = allowed[0]
+            if payload.mode == "batch" and ltf not in {"5m", "15m"}:
+                ltf = "5m"
+            htf = "4h"
+            return lookback, ltf, htf
+
         ltf = payload.ltf_timeframe or self.settings.ltf_timeframe
         htf = payload.htf_timeframe or self.settings.htf_timeframe
         if payload.mode == "batch" and self._interval_minutes(ltf) < 5:
@@ -140,6 +150,7 @@ class BacktestService:
                     fee_bps=self.settings.backtest_fee_bps,
                     slippage_bps=self.settings.backtest_slippage_bps,
                     cooldown_candles=self.settings.backtest_cooldown_candles,
+                    strategy=job.request.strategy,
                 )
                 results.append(symbol_result)
                 job.progress = index / len(universe)
@@ -161,10 +172,12 @@ class BacktestService:
             summary = BacktestSummary(
                 job_id=job.job_id,
                 mode=job.request.mode,
+                strategy=job.request.strategy,
                 profile=profile.name,
                 lookback_days=job.lookback_days,
                 ltf_timeframe=job.ltf_timeframe,
                 htf_timeframe=job.htf_timeframe,
+                htf_context="1D+4H" if job.request.strategy == "crt_ict" else job.htf_timeframe,
                 universe=universe,
                 started_at=started_at,
                 finished_at=datetime.now(timezone.utc),
@@ -197,6 +210,7 @@ class BacktestService:
             "job_id": job.job_id,
             "status": job.status,
             "mode": job.request.mode,
+            "strategy": job.request.strategy,
             "profile": job.request.profile,
             "progress": round(job.progress, 6),
             "created_at": job.created_at.isoformat(),
@@ -209,6 +223,7 @@ class BacktestService:
             job_id=job.job_id,
             status=job.status,  # type: ignore[arg-type]
             mode=job.request.mode,
+            strategy=job.request.strategy,
             profile=job.request.profile,
             progress=round(job.progress, 6),
             created_at=job.created_at,

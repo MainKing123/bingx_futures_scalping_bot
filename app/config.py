@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -28,11 +30,24 @@ class Settings(BaseSettings):
 
     htf_timeframe: str = "30m"
     ltf_timeframe: str = "1m"
+    strategy_live_mode: Literal["legacy", "crt_shadow", "crt_live"] = "crt_shadow"
     min_risk_reward: float = 3.0
     swing_lookback: int = 3
     ob_max_age_candles: int = 50
     fvg_min_size_percent: float = 0.1
     min_confluences: int = 2
+
+    crt_killzone_enabled: bool = True
+    crt_london_session: tuple[int, int] = (2, 5)
+    crt_new_york_session: tuple[int, int] = (7, 10)
+    crt_entry_timeframes: list[str] = ["5m", "15m"]
+    crt_range_lookback: int = 20
+    crt_min_sweep_pct: float = 0.03
+    crt_min_wick_body_ratio: float = 1.2
+    crt_equal_level_tolerance: float = 0.0005
+    crt_mss_lookback: int = 8
+    crt_stop_buffer_bps: float = 2.0
+    crt_min_rr: float = 2.0
 
     risk_per_trade_percent: float = 1.0
     max_open_setups: int = 5
