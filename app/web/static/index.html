@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BingX Setup Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="bg-shape bg-shape-a"></div>
+  <div class="bg-shape bg-shape-b"></div>
+  <div class="bg-grid"></div>
+
+  <div class="layout">
+    <header class="panel hero">
+      <div>
+        <p class="eyebrow">SMC / ICT Scanner</p>
+        <h1>Trade Setup Monitor</h1>
+        <p class="subtle">Live view of setups, watchlist, and scanner health</p>
+      </div>
+      <div class="hero-actions">
+        <span id="wsBadge" class="badge badge-offline">WS Offline</span>
+        <a class="link-button" href="/docs" target="_blank" rel="noreferrer">Open API Docs</a>
+      </div>
+    </header>
+
+    <section class="metrics">
+      <article class="panel metric-card">
+        <p class="metric-label">Total Setups</p>
+        <p id="metricTotal" class="metric-value">0</p>
+      </article>
+      <article class="panel metric-card">
+        <p class="metric-label">Active Setups</p>
+        <p id="metricActive" class="metric-value">0</p>
+      </article>
+      <article class="panel metric-card">
+        <p class="metric-label">Win Rate</p>
+        <p id="metricWinRate" class="metric-value">0%</p>
+      </article>
+      <article class="panel metric-card">
+        <p class="metric-label">Watchlist</p>
+        <p id="metricWatchlist" class="metric-value">0</p>
+      </article>
+      <article class="panel metric-card">
+        <p class="metric-label">Volatile Pairs</p>
+        <p id="metricVolatile" class="metric-value">0</p>
+      </article>
+    </section>
+
+    <section class="panel controls">
+      <div class="controls-grid">
+        <label>
+          <span>Search</span>
+          <input id="searchInput" type="text" placeholder="BTC-USDT, ETH-USDT...">
+        </label>
+        <label>
+          <span>Status</span>
+          <select id="statusFilter">
+            <option value="">All</option>
+            <option value="ACTIVE">ACTIVE</option>
+            <option value="TP1_HIT">TP1_HIT</option>
+            <option value="TP2_HIT">TP2_HIT</option>
+            <option value="TP3_HIT">TP3_HIT</option>
+            <option value="SL_HIT">SL_HIT</option>
+            <option value="EXPIRED">EXPIRED</option>
+            <option value="CANCELLED">CANCELLED</option>
+          </select>
+        </label>
+        <label>
+          <span>Direction</span>
+          <select id="directionFilter">
+            <option value="">All</option>
+            <option value="LONG">LONG</option>
+            <option value="SHORT">SHORT</option>
+          </select>
+        </label>
+        <label>
+          <span>Confidence</span>
+          <select id="confidenceFilter">
+            <option value="">All</option>
+            <option value="HIGH">HIGH</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="LOW">LOW</option>
+          </select>
+        </label>
+      </div>
+      <div class="controls-actions">
+        <button id="refreshBtn" type="button">Refresh</button>
+        <label class="toggle">
+          <input id="autoRefreshToggle" type="checkbox" checked>
+          <span>Auto refresh 10s</span>
+        </label>
+      </div>
+    </section>
+
+    <main class="content-grid">
+      <section class="panel setups-panel">
+        <div class="panel-header">
+          <h2>Setups</h2>
+          <span id="setupsCount" class="pill">0</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Symbol</th>
+                <th>Dir</th>
+                <th>Status</th>
+                <th>Conf</th>
+                <th>Entry</th>
+                <th>SL</th>
+                <th>RR</th>
+              </tr>
+            </thead>
+            <tbody id="setupsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="side-stack">
+        <section class="panel tv-panel">
+          <div class="panel-header">
+            <h2>TradingView</h2>
+            <span id="tvSourceBadge" class="pill">-</span>
+          </div>
+          <div class="tv-actions">
+            <button id="tvSwitchSource" type="button">Switch Source</button>
+            <a id="tvOpenLink" class="link-button" href="#" target="_blank" rel="noreferrer">Open in TradingView</a>
+          </div>
+          <div id="selectedSetupCard" class="selected-setup-card">
+            <p class="empty">Select a setup row to load chart</p>
+          </div>
+          <div class="tv-frame-wrap">
+            <iframe id="tvFrame" title="TradingView chart" loading="lazy"></iframe>
+          </div>
+        </section>
+
+        <section class="panel volatile-panel">
+          <div class="panel-header">
+            <h2>Top Volatile Pairs</h2>
+            <span id="volatileCount" class="pill">0</span>
+          </div>
+          <div id="volatileList" class="volatile-list"></div>
+        </section>
+
+        <section class="panel watchlist-panel">
+          <div class="panel-header">
+            <h2>Watchlist</h2>
+            <span id="watchlistCount" class="pill">0</span>
+          </div>
+          <div id="watchlistList" class="watchlist-list"></div>
+        </section>
+
+        <section class="panel events-panel">
+          <div class="panel-header">
+            <h2>Live Events</h2>
+          </div>
+          <div id="eventsLog" class="events-log"></div>
+        </section>
+      </aside>
+    </main>
+
+    <section class="panel strategy-panel">
+      <div class="panel-header">
+        <h2>Strategy Lab</h2>
+        <span id="backtestStatusBadge" class="badge badge-offline">Idle</span>
+      </div>
+
+      <form id="backtestForm" class="strategy-form">
+        <label>
+          <span>Mode</span>
+          <select id="backtestMode">
+            <option value="batch">batch (top-20)</option>
+            <option value="single">single</option>
+          </select>
+        </label>
+        <label>
+          <span>Symbol</span>
+          <input id="backtestSymbol" type="text" placeholder="BTC-USDT">
+        </label>
+        <label>
+          <span>Lookback days</span>
+          <input id="backtestLookbackDays" type="number" min="1" max="30" value="14">
+        </label>
+        <label>
+          <span>Profile</span>
+          <select id="backtestProfile">
+            <option value="default">default</option>
+            <option value="conservative">conservative</option>
+            <option value="aggressive">aggressive</option>
+            <option value="high_rr">high_rr</option>
+          </select>
+        </label>
+        <label>
+          <span>LTF</span>
+          <select id="backtestLtf">
+            <option value="1m">1m</option>
+            <option value="3m">3m</option>
+            <option value="5m">5m</option>
+            <option value="15m">15m</option>
+          </select>
+        </label>
+        <label>
+          <span>HTF</span>
+          <select id="backtestHtf">
+            <option value="30m">30m</option>
+            <option value="1h">1h</option>
+            <option value="4h">4h</option>
+          </select>
+        </label>
+        <div class="strategy-form-actions">
+          <button id="runBacktestBtn" type="submit">Run Backtest</button>
+        </div>
+      </form>
+
+      <div class="strategy-progress">
+        <div class="progress-label">
+          <span id="backtestJobLabel">No active backtest</span>
+          <span id="backtestProgressText">0%</span>
+        </div>
+        <div class="progress-track">
+          <div id="backtestProgressBar" class="progress-fill"></div>
+        </div>
+      </div>
+
+      <div class="strategy-metrics">
+        <article class="metric-mini">
+          <p>Trades</p>
+          <strong id="btTrades">0</strong>
+        </article>
+        <article class="metric-mini">
+          <p>Win Rate</p>
+          <strong id="btWinRate">0%</strong>
+        </article>
+        <article class="metric-mini">
+          <p>Expectancy</p>
+          <strong id="btExpectancy">0</strong>
+        </article>
+        <article class="metric-mini">
+          <p>Profit Factor</p>
+          <strong id="btProfitFactor">0</strong>
+        </article>
+        <article class="metric-mini">
+          <p>Max Drawdown</p>
+          <strong id="btMaxDD">0</strong>
+        </article>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Trades</th>
+              <th>Win Rate</th>
+              <th>Expectancy</th>
+              <th>Profit Factor</th>
+              <th>Max DD</th>
+              <th>PnL %</th>
+            </tr>
+          </thead>
+          <tbody id="backtestResultsBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

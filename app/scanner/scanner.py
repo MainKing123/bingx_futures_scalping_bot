@@ -53,6 +53,7 @@ class PairScanner:
         self.trade_tracker = trade_tracker
         self.executor = executor
         self.watchlist: dict[str, WatchlistEntry] = {}
+        self.volatile_pairs: list[dict] = []
         self.sem = asyncio.Semaphore(5)
         self.kline_stream.on_kline_close(self._on_kline_close)
 
@@ -92,7 +93,24 @@ class PairScanner:
             logger.exception(f"Failed processing kline close for {symbol}: {exc}")
 
     async def scan(self):
-        symbols = await self.client.get_top_symbols(self.settings.top_pairs_count, self.settings.min_daily_volume_usd)
+        self.volatile_pairs = await self.client.get_top_volatile_symbols(
+            limit=self.settings.top_pairs_count,
+            min_volume_usd=self.settings.min_daily_volume_usd,
+            pool_size=self.settings.volatility_pool_size,
+            interval=self.settings.volatility_interval,
+            lookback=self.settings.volatility_lookback_candles,
+        )
+        symbols = [row["symbol"] for row in self.volatile_pairs]
+        if not symbols:
+            symbols = await self.client.get_top_symbols(self.settings.top_pairs_count, self.settings.min_daily_volume_usd)
+            self.volatile_pairs = [{"symbol": symbol, "volatility": 0.0} for symbol in symbols]
+
+        await self.ws_manager.broadcast("volatile_pairs_update", {"pairs": self.volatile_pairs, "count": len(self.volatile_pairs)})
+
+        selected = set(symbols)
+        for watch_symbol in list(self.watchlist):
+            if watch_symbol not in selected:
+                await self._remove_from_watchlist(watch_symbol, "not_in_top_volatile")
 
         async def analyze(symbol: str):
             async with self.sem:
@@ -109,7 +127,7 @@ class PairScanner:
                     price = float(ticker.get("lastPrice") or 0)
                     zone_mid = (zone_low + zone_high) / 2
                     distance_pct = abs(price - zone_mid) / zone_mid * 100 if zone_mid else 999
-                    if distance_pct < 0.5:
+                    if distance_pct <= self.settings.max_poi_distance_pct:
                         await self._add_to_watchlist(symbol, htf, (zone_low, zone_high))
                     elif symbol in self.watchlist:
                         await self._remove_from_watchlist(symbol, "price_far_from_poi")
@@ -128,6 +146,6 @@ class PairScanner:
                 ticker = await self.client.get_ticker(symbol)
                 price = float(ticker.get("lastPrice") or 0)
                 zone_mid = (entry.poi_zone[0] + entry.poi_zone[1]) / 2
-                if zone_mid and abs(price - zone_mid) / zone_mid * 100 > 1:
+                if zone_mid and abs(price - zone_mid) / zone_mid * 100 > max(1.0, self.settings.max_poi_distance_pct * 2):
                     await self._remove_from_watchlist(symbol, "price_far")
             await asyncio.sleep(60)

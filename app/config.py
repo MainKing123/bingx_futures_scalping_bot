@@ -8,7 +8,7 @@ class SessionConfig(BaseModel):
     london: tuple[int, int] = (8, 17)
     new_york: tuple[int, int] = (13, 22)
     asia: tuple[int, int] = (0, 9)
-    enabled: list[str] = ["london", "new_york"]
+    enabled: list[str] = ["all"]
 
 
 class Settings(BaseSettings):
@@ -17,9 +17,13 @@ class Settings(BaseSettings):
     bingx_api_key: str = ""
     bingx_api_secret: str = ""
 
-    top_pairs_count: int = 30
+    top_pairs_count: int = 20
     scan_interval_seconds: int = 300
     min_daily_volume_usd: float = 10_000_000
+    volatility_pool_size: int = 60
+    volatility_lookback_candles: int = 96
+    volatility_interval: str = "5m"
+    max_poi_distance_pct: float = 0.5
     watchlist_max_age_hours: int = 4
 
     htf_timeframe: str = "30m"
@@ -38,7 +42,13 @@ class Settings(BaseSettings):
     auto_execution: bool = False
     default_leverage: int = 10
 
-    active_sessions: list[str] = ["london", "new_york"]
+    backtest_fee_bps: float = 5.0
+    backtest_slippage_bps: float = 2.0
+    backtest_cooldown_candles: int = 3
+    backtest_default_lookback_days: int = 14
+    backtest_max_lookback_days: int = 30
+
+    active_sessions: list[str] = ["all"]
 
     telegram_enabled: bool = False
     telegram_bot_token: str = ""
@@ -52,8 +62,12 @@ class Settings(BaseSettings):
 def is_active_session(config: SessionConfig) -> bool:
     from datetime import datetime, timezone
 
+    enabled = {name.strip().lower() for name in config.enabled if isinstance(name, str)}
+    if not enabled or "all" in enabled:
+        return True
+
     hour = datetime.now(timezone.utc).hour
-    for name in config.enabled:
+    for name in enabled:
         session = getattr(config, name, None)
         if session and session[0] <= hour < session[1]:
             return True

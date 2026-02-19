@@ -3,10 +3,12 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import select
 
+from app.backtest.schemas import BacktestRunRequest, BacktestRunStatusResponse, BacktestSummary
 from app.db.engine import SessionLocal
 from app.db.models import DailyStats, SetupRecord
 from app.db.repository import aggregate_stats, record_to_setup, setups_query, update_setup_status
 from app.schemas.setup import MarketOverview, TradeSetup
+from app.tradingview import symbol_to_tv_candidates, timeframe_to_tv_interval
 
 router = APIRouter(prefix="/api")
 
@@ -40,6 +42,54 @@ async def get_watchlist(request: Request):
         }
         for x in scanner.watchlist.values()
     ]
+
+
+@router.get("/scanner/volatile-pairs", response_model=list[dict])
+async def get_volatile_pairs(request: Request):
+    return request.app.state.scanner.volatile_pairs
+
+
+@router.post("/backtest/run", response_model=BacktestRunStatusResponse)
+async def run_backtest(payload: BacktestRunRequest, request: Request):
+    return await request.app.state.backtest_service.start(payload)
+
+
+@router.get("/backtest/jobs/{job_id}", response_model=BacktestRunStatusResponse)
+async def get_backtest_job_status(job_id: str, request: Request):
+    status = request.app.state.backtest_service.get_status(job_id)
+    if status is None:
+        raise HTTPException(status_code=404, detail="Backtest job not found")
+    return status
+
+
+@router.get("/backtest/jobs/{job_id}/result", response_model=BacktestSummary)
+async def get_backtest_job_result(job_id: str, request: Request):
+    status = request.app.state.backtest_service.get_status(job_id)
+    if status is None:
+        raise HTTPException(status_code=404, detail="Backtest job not found")
+    if status.status != "completed":
+        raise HTTPException(status_code=409, detail=f"Backtest job status is {status.status}")
+    result = request.app.state.backtest_service.get_result(job_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Backtest result not found")
+    return result
+
+
+@router.get("/backtest/latest", response_model=BacktestSummary)
+async def get_latest_backtest(request: Request):
+    result = request.app.state.backtest_service.get_latest_result()
+    if result is None:
+        raise HTTPException(status_code=404, detail="No completed backtest yet")
+    return result
+
+
+@router.get("/tradingview/symbol/{symbol}")
+async def resolve_tradingview_symbol(symbol: str, request: Request):
+    return {
+        "input_symbol": symbol.upper(),
+        "candidates": symbol_to_tv_candidates(symbol),
+        "default_interval": timeframe_to_tv_interval(request.app.state.settings.ltf_timeframe),
+    }
 
 
 @router.get("/market-structure/{symbol}", response_model=MarketOverview)
@@ -94,11 +144,20 @@ async def get_config(request: Request):
         "top_pairs_count": settings.top_pairs_count,
         "scan_interval_seconds": settings.scan_interval_seconds,
         "min_daily_volume_usd": settings.min_daily_volume_usd,
+        "volatility_pool_size": settings.volatility_pool_size,
+        "volatility_lookback_candles": settings.volatility_lookback_candles,
+        "volatility_interval": settings.volatility_interval,
+        "max_poi_distance_pct": settings.max_poi_distance_pct,
         "risk_per_trade_percent": settings.risk_per_trade_percent,
         "max_open_setups": settings.max_open_setups,
         "daily_loss_limit_percent": settings.daily_loss_limit_percent,
         "active_sessions": settings.active_sessions,
         "auto_execution": settings.auto_execution,
+        "backtest_fee_bps": settings.backtest_fee_bps,
+        "backtest_slippage_bps": settings.backtest_slippage_bps,
+        "backtest_cooldown_candles": settings.backtest_cooldown_candles,
+        "backtest_default_lookback_days": settings.backtest_default_lookback_days,
+        "backtest_max_lookback_days": settings.backtest_max_lookback_days,
     }
 
 
@@ -106,11 +165,22 @@ async def get_config(request: Request):
 async def update_config(updates: dict, request: Request):
     settings = request.app.state.settings
     updatable = {
+        "top_pairs_count",
+        "min_daily_volume_usd",
+        "volatility_pool_size",
+        "volatility_lookback_candles",
+        "volatility_interval",
+        "max_poi_distance_pct",
         "risk_per_trade_percent",
         "max_open_setups",
         "daily_loss_limit_percent",
         "active_sessions",
         "min_risk_reward",
+        "backtest_fee_bps",
+        "backtest_slippage_bps",
+        "backtest_cooldown_candles",
+        "backtest_default_lookback_days",
+        "backtest_max_lookback_days",
     }
     for key, value in updates.items():
         if key in updatable and hasattr(settings, key):

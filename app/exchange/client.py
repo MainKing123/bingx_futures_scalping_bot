@@ -81,9 +81,27 @@ class BingXClient:
         if not rows:
             return pd.DataFrame(columns=["open", "high", "low", "close", "volume"])
         frame = pd.DataFrame(rows)
-        frame = frame.iloc[:, :7]
-        frame.columns = ["timestamp", "open", "close", "high", "low", "volume", "turnover"]
-        frame = frame[["timestamp", "open", "high", "low", "close", "volume"]]
+
+        if isinstance(rows[0], dict):
+            ts_col = "time" if "time" in frame.columns else "timestamp"
+            frame = frame.rename(columns={ts_col: "timestamp"})
+            required = ["timestamp", "open", "high", "low", "close", "volume"]
+            for col in required:
+                if col not in frame.columns:
+                    frame[col] = None
+            frame = frame[required]
+        else:
+            width = len(rows[0]) if rows and isinstance(rows[0], (list, tuple)) else 0
+            if width >= 7:
+                frame = frame.iloc[:, :7]
+                frame.columns = ["timestamp", "open", "close", "high", "low", "volume", "turnover"]
+                frame = frame[["timestamp", "open", "high", "low", "close", "volume"]]
+            elif width == 6:
+                frame = frame.iloc[:, :6]
+                frame.columns = ["timestamp", "open", "high", "low", "close", "volume"]
+            else:
+                return pd.DataFrame(columns=["open", "high", "low", "close", "volume"])
+
         for col in ["open", "high", "low", "close", "volume"]:
             frame[col] = pd.to_numeric(frame[col], errors="coerce")
         frame["timestamp"] = pd.to_datetime(frame["timestamp"], unit="ms", utc=True)
@@ -109,6 +127,47 @@ class BingXClient:
         items = [t for t in tickers if float(t.get("quoteVolume") or 0) > min_volume_usd]
         items.sort(key=lambda x: float(x.get("quoteVolume", 0)), reverse=True)
         return [item["symbol"] for item in items[:limit]]
+
+    @staticmethod
+    def _volatility_score(frame: pd.DataFrame) -> float:
+        if frame.empty or len(frame) < 5:
+            return 0.0
+        close = pd.to_numeric(frame["close"], errors="coerce")
+        spread = (pd.to_numeric(frame["high"], errors="coerce") - pd.to_numeric(frame["low"], errors="coerce")).abs()
+        spread_pct = (spread / close.replace(0, pd.NA) * 100).dropna()
+        if spread_pct.empty:
+            return 0.0
+        return float(spread_pct.mean())
+
+    async def get_top_volatile_symbols(
+        self,
+        limit: int = 20,
+        min_volume_usd: float = 10_000_000,
+        pool_size: int = 60,
+        interval: str = "5m",
+        lookback: int = 96,
+    ) -> list[dict]:
+        candidates = await self.get_top_symbols(limit=max(limit, pool_size), min_volume_usd=min_volume_usd)
+        if not candidates:
+            return []
+
+        sem = asyncio.Semaphore(8)
+
+        async def score(symbol: str) -> dict | None:
+            async with sem:
+                try:
+                    frame = await self.get_klines(symbol, interval=interval, limit=lookback)
+                    value = self._volatility_score(frame)
+                    if value <= 0:
+                        return None
+                    return {"symbol": symbol, "volatility": round(value, 4)}
+                except Exception as exc:
+                    logger.warning(f"Volatility calculation failed for {symbol}: {exc}")
+                    return None
+
+        ranked = [row for row in await asyncio.gather(*(score(symbol) for symbol in candidates)) if row is not None]
+        ranked.sort(key=lambda row: row["volatility"], reverse=True)
+        return ranked[:limit]
 
     async def get_depth(self, symbol: str, limit: int = 20) -> dict: return await self._request("GET", SWAP_DEPTH, {"symbol": symbol, "limit": limit}, signed=False)
     async def get_mark_price(self, symbol: str) -> dict: return await self._request("GET", SWAP_PREMIUM_INDEX, {"symbol": symbol}, signed=False)

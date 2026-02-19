@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+import pandas as pd
+
 from app.config import SessionConfig, Settings, is_active_session
 from app.exchange.client import BingXClient
 from app.risk.risk_manager import RiskManager
@@ -13,8 +15,7 @@ from app.strategy.order_blocks import check_ob_mitigation, find_order_blocks
 from app.strategy.premium_discount import get_premium_discount_zones, is_in_discount, is_in_premium
 
 
-async def analyze_htf(client: BingXClient, symbol: str) -> HTFAnalysis:
-    df = await client.get_klines(symbol, "30m", 200)
+def analyze_htf_from_df(df: pd.DataFrame) -> HTFAnalysis:
     swings = find_swing_points(df)
     trend = determine_trend(swings)
     structure = detect_bos(df, swings, trend) + detect_choch(df, swings, trend)
@@ -33,25 +34,46 @@ async def analyze_htf(client: BingXClient, symbol: str) -> HTFAnalysis:
     return HTFAnalysis(trend=trend, bias=trend.direction, poi_zones=poi[:3], structure=structure, swings=swings, obs=obs, fvgs=fvgs)
 
 
-async def find_ltf_entry(client: BingXClient, symbol: str, htf: HTFAnalysis, settings: Settings, risk_manager: RiskManager) -> TradeSetup | None:
+async def analyze_htf(client: BingXClient, symbol: str) -> HTFAnalysis:
+    df = await client.get_klines(symbol, "30m", 200)
+    return analyze_htf_from_df(df)
+
+
+def find_ltf_entry_from_df(
+    *,
+    symbol: str,
+    htf: HTFAnalysis,
+    ltf_df: pd.DataFrame,
+    settings: Settings,
+    risk_manager: RiskManager,
+    now: datetime | None = None,
+    enforce_session_filter: bool = True,
+) -> TradeSetup | None:
     if htf.bias == TrendDirection.RANGING or not htf.poi_zones:
         return None
     if not risk_manager.can_open_setup():
         return None
 
-    session_cfg = SessionConfig(enabled=settings.active_sessions)
-    if not is_active_session(session_cfg):
+    if enforce_session_filter:
+        session_cfg = SessionConfig(enabled=settings.active_sessions)
+        if not is_active_session(session_cfg):
+            return None
+
+    zone = htf.poi_zones[0]
+    zone_mid = (zone.zone_low + zone.zone_high) / 2
+    current_price = float(ltf_df.iloc[-1]["close"]) if not ltf_df.empty else 0.0
+    distance_pct = abs(current_price - zone_mid) / zone_mid * 100 if zone_mid else 999
+    if distance_pct > settings.max_poi_distance_pct:
         return None
 
-    df = await client.get_klines(symbol, settings.ltf_timeframe, 200)
-    swings = find_swing_points(df, settings.swing_lookback)
+    swings = find_swing_points(ltf_df, settings.swing_lookback)
     trend = determine_trend(swings)
-    choch = detect_choch(df, swings, trend)
+    choch = detect_choch(ltf_df, swings, trend)
     if not choch:
         return None
 
     choch_break = choch[-1]
-    local_obs = find_order_blocks(df, [choch_break], max_age=settings.ob_max_age_candles)
+    local_obs = find_order_blocks(ltf_df, [choch_break], max_age=settings.ob_max_age_candles)
     if not local_obs:
         return None
     ob = local_obs[-1]
@@ -62,7 +84,7 @@ async def find_ltf_entry(client: BingXClient, symbol: str, htf: HTFAnalysis, set
     if htf.bias == TrendDirection.BEARISH and ob.type != "BEARISH":
         return None
 
-    choch_idx = df.index.get_indexer([choch_break.timestamp], method="nearest")[0]
+    choch_idx = ltf_df.index.get_indexer([choch_break.timestamp], method="nearest")[0]
 
     if htf.bias == TrendDirection.BULLISH:
         sl_candidates = [s.price for s in swings if s.index <= choch_idx and s.type in {"HL", "LL"}]
@@ -101,7 +123,7 @@ async def find_ltf_entry(client: BingXClient, symbol: str, htf: HTFAnalysis, set
     position_size = risk_manager.calculate_position_size(entry, sl, settings.risk_per_trade_percent, settings.account_balance_usdt)
 
     return TradeSetup(
-        timestamp=datetime.now(timezone.utc),
+        timestamp=now or datetime.now(timezone.utc),
         symbol=symbol,
         direction=direction,
         setup_type="CHOCH_OB",
@@ -114,3 +136,8 @@ async def find_ltf_entry(client: BingXClient, symbol: str, htf: HTFAnalysis, set
         confluences=confluences,
         position_size_usdt=position_size,
     )
+
+
+async def find_ltf_entry(client: BingXClient, symbol: str, htf: HTFAnalysis, settings: Settings, risk_manager: RiskManager) -> TradeSetup | None:
+    ltf_df = await client.get_klines(symbol, settings.ltf_timeframe, 200)
+    return find_ltf_entry_from_df(symbol=symbol, htf=htf, ltf_df=ltf_df, settings=settings, risk_manager=risk_manager)
