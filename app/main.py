@@ -1,161 +1,79 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+import asyncio
+from contextlib import asynccontextmanager
 
-from app.models import (
-    BotState,
-    ClosePositionRequest,
-    MarketTick,
-    ResetStateRequest,
-    RiskConfig,
-    StrategyConfig,
-    StrategySignal,
-)
-from app.risk import RiskManager
-from app.strategy import ICTSMCStrategy
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from fastapi import FastAPI, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
+from loguru import logger
 
-app = FastAPI(title="BingX Futures Scalping Bot MVP")
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
+from app.api.router import router as api_router
+from app.api.ws_manager import WSManager
+from app.config import Settings
+from app.db.migrations import init_db
+from app.exchange.client import BingXClient
+from app.exchange.ws_stream import BingXKlineStream
+from app.notifications.telegram import TelegramNotifier
+from app.risk.risk_manager import RiskManager
+from app.scanner.scanner import PairScanner
+from app.strategy.smc_engine import SMCEngine
+from app.tracking.trade_tracker import TradeTracker
 
-strategy = ICTSMCStrategy()
-risk_manager = RiskManager()
-
-
-state = BotState(
-    risk_config=RiskConfig(),
-    strategy_config=StrategyConfig(),
-    latest_signal=StrategySignal(has_signal=False, reason="No ticks processed yet"),
-)
+settings = Settings()
+ws_manager = WSManager()
 
 
-def _new_state(risk_config: RiskConfig | None = None, strategy_config: StrategyConfig | None = None) -> BotState:
-    return BotState(
-        risk_config=risk_config or RiskConfig(),
-        strategy_config=strategy_config or StrategyConfig(),
-        latest_signal=StrategySignal(has_signal=False, reason="State reset"),
-    )
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    client = BingXClient(settings)
+    kline_stream = BingXKlineStream()
+    engine = SMCEngine(client, settings)
+    scanner = PairScanner(client, kline_stream, engine, settings)
+    risk_manager = RiskManager(settings)
+    tracker = TradeTracker(client, ws_manager)
+    notifier = TelegramNotifier(settings)
+
+    app.state.client = client
+    app.state.stream = kline_stream
+    app.state.engine = engine
+    app.state.scanner = scanner
+    app.state.risk_manager = risk_manager
+    app.state.tracker = tracker
+    app.state.notifier = notifier
+
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(scanner.scan, "interval", seconds=settings.scan_interval_seconds)
+    scheduler.add_job(risk_manager.reset_daily, "cron", hour=0, minute=0)
+    scheduler.start()
+
+    stream_task = asyncio.create_task(kline_stream.connect())
+    scan_watch_task = asyncio.create_task(scanner.watch_loop())
+    tracker_task = asyncio.create_task(tracker.track_loop())
+    logger.info("Application startup complete")
+
+    try:
+        yield
+    finally:
+        scheduler.shutdown()
+        for task in (stream_task, scan_watch_task, tracker_task):
+            task.cancel()
+        await kline_stream.close()
+        await client.close()
+        logger.info("Graceful shutdown complete")
 
 
-def _is_blocked_for_new_trades() -> tuple[bool, str]:
-    now = risk_manager.utcnow()
-    stats = state.stats
-    risk = state.risk_config
-    stats.daily_loss_used_pct = risk_manager.update_daily_loss_used_pct(
-        stats.closed_pnl_usdt,
-        risk,
-        realized_pnl_usdt=0.0,
-        now=now,
-    )
-
-    if stats.cooldown_until is not None and now < stats.cooldown_until:
-        return True, f"Cooldown active until {stats.cooldown_until.isoformat()}"
-
-    if stats.daily_loss_used_pct >= risk.daily_loss_limit_pct:
-        return True, "Daily loss limit reached"
-
-    if stats.consecutive_losses >= risk.max_consecutive_losses:
-        return True, "Max consecutive losses reached"
-
-    return False, ""
+app = FastAPI(title="SMC/ICT Crypto Scanner", lifespan=lifespan)
+app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["*"], allow_headers=["*"])
+app.include_router(api_router)
 
 
-def _register_close(pnl: float) -> None:
-    stats = state.stats
-    stats.closed_pnl_usdt += pnl
-    stats.trades_closed += 1
-    stats.daily_loss_used_pct = risk_manager.update_daily_loss_used_pct(
-        stats.closed_pnl_usdt,
-        state.risk_config,
-        realized_pnl_usdt=pnl,
-    )
-
-    if pnl >= 0:
-        stats.wins += 1
-        stats.consecutive_losses = 0
-        return
-
-    stats.losses += 1
-    stats.consecutive_losses += 1
-    stats.cooldown_until = risk_manager.should_enter_cooldown(risk_manager.utcnow(), state.risk_config)
-
-
-@app.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-
-@app.get("/api/state", response_model=BotState)
-async def get_state() -> BotState:
-    return state
-
-
-@app.post("/api/reset", response_model=BotState)
-async def reset_state(payload: ResetStateRequest) -> BotState:
-    global state
-    if payload.keep_configs:
-        state = _new_state(risk_config=state.risk_config, strategy_config=state.strategy_config)
-    else:
-        state = _new_state()
-    return state
-
-
-@app.post("/api/risk-config", response_model=BotState)
-async def update_risk_config(config: RiskConfig) -> BotState:
-    state.risk_config = config
-    return state
-
-
-@app.post("/api/strategy-config", response_model=BotState)
-async def update_strategy_config(config: StrategyConfig) -> BotState:
-    state.strategy_config = config
-    return state
-
-
-@app.post("/api/tick", response_model=BotState)
-async def process_tick(tick: MarketTick) -> BotState:
-    if state.active_position is not None:
-        pos = state.active_position
-        pos, partial_pnl = risk_manager.apply_partial_take_profit(pos, tick.price)
-        if partial_pnl != 0:
-            _register_close(partial_pnl)
-
-        pos = risk_manager.apply_trailing_stop(pos, tick.price)
-        hit_stop = tick.price <= pos.stop_price if pos.side.value == "long" else tick.price >= pos.stop_price
-        hit_tp = tick.price >= pos.take_profit if pos.side.value == "long" else tick.price <= pos.take_profit
-
-        if hit_stop or hit_tp:
-            pnl = risk_manager.close_pnl(pos, tick.price)
-            _register_close(pnl)
-            state.active_position = None
-            state.latest_signal = StrategySignal(has_signal=False, reason="Position closed")
-            return state
-
-        state.active_position = pos
-        state.latest_signal = StrategySignal(has_signal=False, reason="Managing active position")
-        return state
-
-    state.latest_signal = strategy.evaluate(tick, state.strategy_config)
-    blocked, reason = _is_blocked_for_new_trades()
-    if blocked:
-        state.latest_signal = StrategySignal(has_signal=False, reason=reason)
-        return state
-
-    if state.latest_signal.has_signal:
-        state.active_position = risk_manager.build_position(tick.symbol, state.latest_signal, state.risk_config)
-
-    return state
-
-
-@app.post("/api/close-position", response_model=BotState)
-async def close_position(payload: ClosePositionRequest) -> BotState:
-    if state.active_position is None:
-        raise HTTPException(status_code=400, detail="No active position")
-
-    pnl = risk_manager.close_pnl(state.active_position, payload.close_price)
-    _register_close(pnl)
-    state.active_position = None
-    return state
+@app.websocket("/ws")
+async def ws_endpoint(websocket: WebSocket):
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    finally:
+        ws_manager.disconnect(websocket)
