@@ -46,6 +46,82 @@ def _first_each(**setup_kwargs):
     return provider
 
 
+def _contract(**overrides):
+    contract = {"contractSize": 1, "volUnit": 1, "minVol": 1, "maxVol": 850,
+                "limitMaxVol": 850, "priceUnit": .01}
+    contract.update(overrides)
+    return contract
+
+
+def test_positive_signal_schedule_preserves_full_execution_and_financial_results():
+    settings = _settings()
+    frames = _frames([(105,106,104,105),(100,105,99,102),(110,121,109,120),(120,121,119,120)], settings)
+    timestamp = frames["BTC_USDT"]["1m"].index[0]+pd.Timedelta(minutes=1)
+    calls = []
+    def provider(**kwargs):
+        calls.append(kwargs["now"])
+        return _setup(kwargs) if kwargs["now"] == timestamp else None
+    plain = portfolio_replay(frames, settings, signal_provider=provider)
+    calls.clear()
+    scheduled = portfolio_replay(frames, settings, signal_provider=provider, signal_schedule={"BTC_USDT":[timestamp]})
+    for key in ("net_pnl_usdt","marked_equity","max_marked_drawdown_percent","funding_total_usdt",
+                "execution_bars","execution_minutes","trades","daily_close","unfinished_positions"):
+        assert scheduled[key] == plain[key]
+    assert calls == [timestamp]
+    assert scheduled["positive_signal_schedule_applied"] is True
+
+
+@pytest.mark.parametrize("bad_schedule", [{}, {"BTC_USDT":["2026-10-05T07:00:30Z"]},
+                                         {"BTC_USDT":["2026-10-05T07:01Z","2026-10-05T07:01Z"]}])
+def test_positive_signal_schedule_rejects_missing_symbol_nonclose_and_duplicates(bad_schedule):
+    settings = _settings()
+    frames = _frames([(105,106,104,105)]*2,settings)
+    with pytest.raises(ValueError, match="schedule"):
+        portfolio_replay(frames,settings,signal_schedule=bad_schedule)
+
+
+def test_contract_maximum_and_lot_rounding_reserve_only_actual_margin():
+    settings = _settings()
+    frames = _frames([(105,106,104,105)]*2,settings)
+    result = portfolio_replay(frames,settings,signal_provider=_first_each(stop=99.99,target=100.02),
+                              position_limits={"BTC_USDT":_contract(maxVol=7,limitMaxVol=7)})
+    order = result["active_orders_positions"][0]
+    assert order["notional"] == pytest.approx(700)
+    assert result["peak_reserved_margin_usdt"] == pytest.approx(700/3)
+    assert result["downsized_for_contract_limits"] == 1
+    assert result["historical_contract_constraints_known"] is False
+
+
+def test_contract_minimum_rejects_order_instead_of_increasing_risk():
+    settings = _settings()
+    frames = _frames([(105,106,104,105)]*2,settings)
+    result = portfolio_replay(frames,settings,signal_provider=_first_each(),
+                              position_limits={"BTC_USDT":_contract()})
+    # Desired $50 notional cannot buy a whole contract at $100.
+    assert result["accepted_signals"] == 0
+    assert result["rejected_contract_limits"] == 1
+    assert result["peak_reserved_margin_usdt"] == 0
+
+
+def test_tick_rounding_keeps_sweep_stop_and_minimum_2r_cash_risk():
+    settings = _settings()
+    frames = _frames([(105,106,104,105),(100,100.1,99.7,99.9)],settings)
+    def provider(**kwargs):
+        return _setup(kwargs,stop=99.805,target=100.39).model_copy(update={"entry":100.})
+    result = portfolio_replay(frames,settings,signal_provider=provider,
+                              position_limits={"BTC_USDT":_contract(contractSize=.01,priceUnit=.1)})
+    trade = result["trades"][0]
+    assert result["rounded_contract_prices"] >= 1
+    assert trade["entry"] == pytest.approx(99.9)
+    assert trade["stop"] == pytest.approx(99.8)
+    assert trade["target"] == pytest.approx(100.3)
+    assert trade["stop"] < 99.805
+    assert (trade["target"]-trade["entry"])/(trade["entry"]-trade["stop"]) >= 2
+    assert trade["notional"] == pytest.approx(850 * .01 * 99.9)
+    assert trade["pnl_usdt"] == pytest.approx(-.85)
+    assert abs(trade["pnl_usdt"]) <= 5
+
+
 def test_three_shared_slots_include_pending_orders_and_use_universe_order():
     settings = _settings()
     symbols = ["ZEC_USDT","SOL_USDT","DOGE_USDT","XRP_USDT","ETH_USDT"]
@@ -206,3 +282,61 @@ def test_future_dated_signal_is_rejected_instead_of_entered_early():
         return setup
     with pytest.raises(ValueError,match="confirmed candle close"):
         portfolio_replay(frames,settings,signal_provider=provider)
+
+
+def _m5_frames(rows, settings, symbols=("BTC_USDT",)):
+    frames = _frames(rows, settings, symbols)
+    index = pd.date_range("2026-10-05T07:00Z", periods=len(rows), freq="5min")
+    for symbol in symbols:
+        frames[symbol]["5m"] = pd.DataFrame(rows, index=index, columns=["open", "high", "low", "close"], dtype=float)
+        del frames[symbol]["1m"]  # No fabricated minute path is supplied.
+    return frames
+
+
+@pytest.mark.parametrize("rows,ttl,rate", [
+    ([(105,106,104,105),(100,125,85,100)], 30, .001),
+    ([(105,106,104,105),(105,125,99,110),(110,121,105,120)], 30, -.001),
+    ([(105,106,104,105),(105,125,99,110),(100,125,95,120)], 2, -.001),
+    ([(105,106,104,105),(100,121,95,120)], 2, .001),
+])
+def test_explicit_m5_portfolio_matches_coarse_replay_with_ttl_ambiguities_and_funding(rows, ttl, rate):
+    settings = _settings(volium_mode="intraday", pending_order_max_age_minutes=ttl,
+                         paper_fee_bps=5, paper_slippage_bps=2)
+    frames = _m5_frames(rows, settings)
+    rates = pd.Series([rate], index=pd.DatetimeIndex(["2026-10-05T07:06Z"]))
+    actual = portfolio_replay(frames, settings, execution_timeframe="5m",
+                             funding_rates={"BTC_USDT": rates}, signal_provider=_first_each())
+    expected = replay("BTC_USDT", frames["BTC_USDT"], settings, funding_rates=rates,
+                      signal_provider=_first_each())
+    for key in ("final_realized_equity", "funding_total_usdt", "trades_count", "expired_limits",
+                "ambiguous_expiry_limits", "max_marked_drawdown_percent"):
+        assert actual[key] == pytest.approx(expected[key])
+    for trade, reference in zip(actual["trades"], expected["trades"]):
+        assert {key: trade[key] for key in reference} == reference
+    assert actual["execution_timeframe"] == "5m" and actual["coarse_execution_proxy"]
+    assert actual["execution_minutes"] == len(rows) * 5
+    assert actual["execution_bars"] == len(rows)
+
+
+def test_m5_cannot_fill_on_confirmation_bar_and_uses_closed_context_only():
+    settings = _settings(volium_mode="intraday")
+    frames = _m5_frames([(100,121,89,100),(105,106,104,105)], settings)
+    calls = []
+    def provider(**kwargs):
+        calls.append(kwargs["now"])
+        for tf, frame in kwargs["frames"].items():
+            assert (frame.index + pd.Timedelta(seconds=SECONDS[tf]) <= kwargs["now"]).all()
+        return _setup(kwargs)
+    result = portfolio_replay(frames, settings, execution_timeframe="5m", signal_provider=provider)
+    assert calls == [pd.Timestamp("2026-10-05T07:05Z")]
+    assert result["trades_count"] == 0 and result["unfinished_limits"] == 1
+
+
+def test_m5_execution_aborts_missing_bar_and_rejects_m1_scalp_confirmation():
+    settings = _settings(volium_mode="intraday")
+    frames = _m5_frames([(105,106,104,105)]*3, settings, ["A_USDT", "B_USDT"])
+    frames["B_USDT"]["5m"] = frames["B_USDT"]["5m"].drop(frames["B_USDT"]["5m"].index[1])
+    with pytest.raises(ValueError, match="Missing 1 M5 execution bars"):
+        portfolio_replay(frames, settings, execution_timeframe="5m")
+    with pytest.raises(ValueError, match="coarser than the strategy confirmation"):
+        portfolio_replay({}, _settings(volium_mode="scalp"), symbols=["BTC_USDT"], execution_timeframe="5m")

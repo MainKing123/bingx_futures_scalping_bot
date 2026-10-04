@@ -1,9 +1,10 @@
-"""Causal shared-account M1 replay using a frozen public-data cache only."""
+"""Causal shared-account replay using a frozen public-data cache only."""
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+from decimal import Decimal
 from pathlib import Path
 
 import numpy as np
@@ -35,20 +36,46 @@ def _frame(frame):
 
 
 def portfolio_replay(frames_by_symbol, settings, *, symbols=None, start_at=None, end_at=None,
-                     execution_frames=None, funding_rates=None, signal_provider=analyze_volium_from_df):
-    """One shared account, M1 fills, and signals at their original M5/M1 closes.
+                     execution_frames=None, funding_rates=None, signal_provider=analyze_volium_from_df,
+                     execution_timeframe="1m", position_limits=None, signal_schedule=None):
+    """One shared account and signals at their original M5/M1 closes.
 
-    Each minute processes funding/exits for ALL symbols before admitting new
+    Each execution bar processes funding/exits for ALL symbols before admitting new
     orders in supplied universe order. Pending orders reserve margin and slots.
     Risk uses realized account equity; margin is capped at 90% of that equity.
     New size is capped by available shared margin, rather than borrowing it twice.
+    M1 is the default. Explicit M5 execution is a coarser OHLC proxy for research,
+    not synthesized M1 data; scalp M1 confirmation cannot use coarser execution.
+    Optional current contract rules are a declared research proxy for historical
+    lot/tick/max-volume constraints. Default None preserves the unrounded model.
+    An optional externally precomputed positive-signal schedule skips provider
+    calls at confirmed closes known to yield None; all price/funding clocks stay
+    complete. Its causal provenance belongs to the supplying research runner.
     """
     if settings.volium_mode not in {"intraday", "scalp"}:
         raise ValueError("Portfolio replay supports intraday/scalp modes")
+    if execution_timeframe not in {"1m", "5m"}:
+        raise ValueError("Portfolio execution timeframe must be 1m or 5m")
+    duration = pd.Timedelta(seconds=SECONDS[execution_timeframe])
+    frequency = f"{SECONDS[execution_timeframe]}s"
+    label = "M1" if execution_timeframe == "1m" else "M5"
     symbols = list(symbols or frames_by_symbol)
     if not symbols or len(set(symbols)) != len(symbols):
         raise ValueError("Portfolio symbols must be unique and ordered")
+    if signal_schedule is not None and set(signal_schedule) != set(symbols):
+        raise ValueError("Positive signal schedule must explicitly cover every portfolio symbol")
+    position_limits = position_limits or {}
+    if not set(position_limits).issubset(symbols):
+        raise ValueError("Contract constraints must belong to portfolio symbols")
+    for symbol, contract in position_limits.items():
+        required = ("contractSize", "volUnit", "minVol", "maxVol", "priceUnit")
+        if any(key not in contract or not np.isfinite(float(contract[key])) or float(contract[key]) <= 0 for key in required):
+            raise ValueError(f"Invalid contract constraint snapshot for {symbol}")
+        if float(contract["minVol"]) > float(contract["maxVol"]):
+            raise ValueError("Contract minimum volume exceeds maximum")
     timeframes = required_timeframes(settings)
+    if SECONDS[execution_timeframe] > SECONDS[timeframes[-1]]:
+        raise ValueError("Execution cannot be coarser than the strategy confirmation timeframe")
     strategy, execution, values, close_indices, signal_times, rates = {}, {}, {}, {}, {}, {}
     rate_cursor = {symbol: 0 for symbol in symbols}
     clocks = pd.DatetimeIndex([], tz="UTC")
@@ -56,17 +83,25 @@ def portfolio_replay(frames_by_symbol, settings, *, symbols=None, start_at=None,
         if symbol not in frames_by_symbol or not set(timeframes).issubset(frames_by_symbol[symbol]):
             raise ValueError(f"Missing strategy frames for {symbol}")
         strategy[symbol] = {tf: _frame(frames_by_symbol[symbol][tf]) for tf in timeframes}
-        source = execution_frames[symbol] if execution_frames is not None else frames_by_symbol[symbol].get("1m")
+        source = execution_frames[symbol] if execution_frames is not None else frames_by_symbol[symbol].get(execution_timeframe)
         if source is None:
-            raise ValueError(f"Missing M1 execution frame for {symbol}")
+            raise ValueError(f"Missing {label} execution frame for {symbol}")
         execution[symbol] = _frame(source)
         values[symbol] = execution[symbol][["open", "high", "low", "close"]].to_numpy(dtype=float)
-        if not execution[symbol].index.equals(execution[symbol].index.floor("min")):
-            raise ValueError("M1 execution timestamps must align to minute boundaries")
+        if not execution[symbol].index.equals(execution[symbol].index.floor(frequency)):
+            raise ValueError(f"{label} execution timestamps must align to {execution_timeframe} boundaries")
         clocks = clocks.union(execution[symbol].index)
         close_indices[symbol] = {tf: frame.index + pd.Timedelta(seconds=SECONDS[tf])
                                  for tf, frame in strategy[symbol].items()}
         signal_times[symbol] = set(close_indices[symbol][timeframes[-1]].asi8)
+        if signal_schedule is not None:
+            declared = [_utc(value).value for value in signal_schedule[symbol]]
+            if len(set(declared)) != len(declared) or not set(declared).issubset(signal_times[symbol]):
+                raise ValueError("Signal schedule must contain unique observed confirmation closes")
+            if any((start_at is not None and value <= _utc(start_at).value)
+                   or (end_at is not None and value > _utc(end_at).value) for value in declared):
+                raise ValueError("Positive signal schedule extends beyond the research window")
+            signal_times[symbol] = set(declared)
         series = None if funding_rates is None else funding_rates.get(symbol)
         rates[symbol] = pd.Series(dtype=float, index=pd.DatetimeIndex([], tz="UTC")) if series is None else series.copy()
         rates[symbol].index = pd.to_datetime(rates[symbol].index, utc=True)
@@ -76,20 +111,20 @@ def portfolio_replay(frames_by_symbol, settings, *, symbols=None, start_at=None,
     if start_at is not None:
         clocks = clocks[clocks >= _utc(start_at)]
     if end_at is not None:
-        clocks = clocks[clocks + pd.Timedelta(minutes=1) <= _utc(end_at)]
+        clocks = clocks[clocks + duration <= _utc(end_at)]
     if clocks.empty:
         raise ValueError("No execution bars in the requested window")
-    first = _utc(start_at).ceil("min") if start_at is not None else clocks[0]
-    last = _utc(end_at).floor("min")-pd.Timedelta(minutes=1) if end_at is not None else clocks[-1]
-    clocks = pd.date_range(first,last,freq="min")
+    first = _utc(start_at).ceil(frequency) if start_at is not None else clocks[0]
+    last = _utc(end_at).floor(frequency)-duration if end_at is not None else clocks[-1]
+    clocks = pd.date_range(first,last,freq=frequency)
     if clocks.empty:
-        raise ValueError("No complete execution minutes in the requested window")
+        raise ValueError("No complete execution bars in the requested window")
     positions = {symbol: execution[symbol].index.get_indexer(clocks) for symbol in symbols}
     for symbol in symbols:
         missing = int((positions[symbol]<0).sum())
         if missing:
-            raise ValueError(f"Missing {missing} M1 execution bars for {symbol}; portfolio replay aborted")
-    execution_closes = {symbol: frame.index + pd.Timedelta(minutes=1) for symbol, frame in execution.items()}
+            raise ValueError(f"Missing {missing} {label} execution bars for {symbol}; portfolio replay aborted")
+    execution_closes = {symbol: frame.index + duration for symbol, frame in execution.items()}
     initial = float(settings.account_balance_usdt)
     equity, marked_equity, realized_peak, marked_peak = initial, initial, initial, initial
     max_realized_dd = max_marked_dd = unrealized = 0.0
@@ -97,6 +132,8 @@ def portfolio_replay(frames_by_symbol, settings, *, symbols=None, start_at=None,
     counts = {key: 0 for key in ("signals", "accepted_signals", "rejected_slots", "rejected_margin",
               "rejected_geometry", "expired_limits", "ambiguous_expiry_limits", "daily_blocked_signal_checks",
               "funding_events_charged", "funding_events_skipped_favorable", "downsized_for_margin")}
+    counts.update({"downsized_for_contract_limits": 0, "rejected_contract_limits": 0,
+                   "rounded_contract_prices": 0})
     funding_total = 0.0
     symbol_funding = {symbol: 0.0 for symbol in symbols}
     symbol_signals = {symbol: 0 for symbol in symbols}
@@ -107,7 +144,7 @@ def portfolio_replay(frames_by_symbol, settings, *, symbols=None, start_at=None,
     costs = 2 * (settings.paper_fee_bps + settings.paper_slippage_bps) / 10000
     leverage = float(settings.default_leverage)
     for step, opened in enumerate(clocks):
-        closed = opened + pd.Timedelta(minutes=1)
+        closed = opened + duration
         if closed.date() != day:
             day, daily_pnl, daily_opening_equity = closed.date(), 0.0, equity
         rows = {}
@@ -217,6 +254,19 @@ def portfolio_replay(frames_by_symbol, settings, *, symbols=None, start_at=None,
             if len(active) >= settings.max_open_setups:
                 counts["rejected_slots"] += 1
                 continue
+            if symbol in position_limits:
+                from app.exchange.client import round_bracket_prices
+                try:
+                    entry, stop, take = round_bracket_prices(position_limits[symbol], setup.direction,
+                                                            setup.entry, setup.stop_loss, setup.take_profits[0])
+                except ValueError:
+                    counts["rejected_contract_limits"] += 1
+                    continue
+                prices = (float(entry), float(stop), float(take))
+                counts["rounded_contract_prices"] += int(prices != (setup.entry, setup.stop_loss, setup.take_profits[0]))
+                setup = setup.model_copy(update={"entry": prices[0], "stop_loss": prices[1],
+                                                 "take_profits": [prices[2]],
+                                                 "risk_reward": abs(prices[2]-prices[0])/abs(prices[0]-prices[1])})
             distance = abs(setup.entry-setup.stop_loss) / setup.entry
             long = setup.direction == "LONG"
             valid = (0 < setup.stop_loss < setup.entry < setup.take_profits[0] if long
@@ -232,6 +282,20 @@ def portfolio_replay(frames_by_symbol, settings, *, symbols=None, start_at=None,
             risk_notional = equity * settings.risk_per_trade_percent / 100 / distance
             notional = min(risk_notional, available * leverage)
             counts["downsized_for_margin"] += int(notional + 1e-9 < risk_notional)
+            if symbol in position_limits:
+                from app.exchange.client import contracts_for_notional
+                contract = position_limits[symbol]
+                maximum = min(Decimal(str(contract["maxVol"])), Decimal(str(contract.get("limitMaxVol", contract["maxVol"]))))
+                maximum_notional = maximum * Decimal(str(contract["contractSize"])) * Decimal(str(setup.entry))
+                bounded = min(Decimal(str(notional)), maximum_notional)
+                try:
+                    volume = contracts_for_notional(contract, bounded, setup.entry)
+                except ValueError:
+                    counts["rejected_contract_limits"] += 1
+                    continue
+                quantized = float(volume * Decimal(str(contract["contractSize"])) * Decimal(str(setup.entry)))
+                counts["downsized_for_contract_limits"] += int(quantized + 1e-9 < notional)
+                notional = quantized
             active[symbol] = {"setup":setup, "notional":notional, "filled":False, "funding":0.0}
             accepted_ids.add((symbol,setup.id))
             counts["accepted_signals"] += 1
@@ -256,8 +320,13 @@ def portfolio_replay(frames_by_symbol, settings, *, symbols=None, start_at=None,
             "price_pnl_usdt":sum(trade["price_pnl_usdt"] for trade in own), "funding_usdt":symbol_funding[symbol],
             "realized_pnl_usdt":sum(trade["price_pnl_usdt"] for trade in own)+symbol_funding[symbol]})
     return {"mode":settings.volium_mode, "symbols":symbols, "initial_equity":initial,
-        "first_execution_open_utc":clocks[0].isoformat(), "last_execution_close_utc":(clocks[-1]+pd.Timedelta(minutes=1)).isoformat(),
-        "execution_minutes":len(clocks), "execution_timeframe":"1m", "final_realized_equity":equity,
+        "first_execution_open_utc":clocks[0].isoformat(), "last_execution_close_utc":(clocks[-1]+duration).isoformat(),
+        "execution_minutes":len(clocks)*SECONDS[execution_timeframe]//60, "execution_timeframe":execution_timeframe,
+        "execution_bars":len(clocks), "coarse_execution_proxy":execution_timeframe != "1m", "final_realized_equity":equity,
+        "contract_constraint_snapshot_applied":position_limits,
+        "positive_signal_schedule_applied":signal_schedule is not None,
+        "daily_blocked_signal_checks_scope":"scheduled_positive_boundaries" if signal_schedule is not None else "all_eligible_boundaries",
+        "historical_contract_constraints_known":False if position_limits else None,
         "net_pnl_usdt":equity-initial, "return_percent":(equity/initial-1)*100,
         "unrealized_pnl_usdt":unrealized, "marked_equity":marked_equity,
         "max_realized_drawdown_percent":max_realized_dd, "max_marked_drawdown_percent":max_marked_dd,
@@ -271,7 +340,8 @@ def portfolio_replay(frames_by_symbol, settings, *, symbols=None, start_at=None,
             "notional":order["notional"],"margin_reserved_usdt":order["notional"]/leverage,
             "signal_time":order["setup"].timestamp.isoformat(),"entry_time":order.get("entry_time"),
             "funding_usdt":order["funding"]} for symbol,order in active.items()],
-        "missing_execution_minutes_by_symbol":{symbol:int((positions[symbol]<0).sum()) for symbol in symbols},
+        "missing_execution_minutes_by_symbol":{symbol:int((positions[symbol]<0).sum())*SECONDS[execution_timeframe]//60 for symbol in symbols},
+        "missing_execution_bars_by_symbol":{symbol:int((positions[symbol]<0).sum()) for symbol in symbols},
         **counts, "symbol_results":symbol_results, "daily_close":list(daily_close.values()), "trades":trades}
 
 
