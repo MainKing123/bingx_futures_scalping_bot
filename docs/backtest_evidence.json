@@ -1,0 +1,459 @@
+{
+  "created_at_utc": "2026-10-04T15:46:03.618336+00:00",
+  "completed_at_utc": "2026-10-04T15:48:29.344826+00:00",
+  "symbols": [
+    "ZEC_USDT",
+    "SOL_USDT",
+    "DOGE_USDT",
+    "XRP_USDT",
+    "ETH_USDT"
+  ],
+  "snapshot": {
+    "source": "MEXC public futures OHLC",
+    "server_snapshot_utc": "2026-10-04T15:23:06.405000+00:00",
+    "snapshot_ms": 1791127386405,
+    "symbols": [
+      "BTC_USDT",
+      "ETH_USDT",
+      "ZEC_USDT",
+      "SOL_USDT",
+      "DOGE_USDT",
+      "XRP_USDT"
+    ],
+    "frames": {
+      "BTC_USDT": {
+        "1m": {
+          "bars": 43330,
+          "first_open_utc": "2026-09-04T13:13:00+00:00",
+          "last_open_utc": "2026-10-04T15:22:00+00:00",
+          "last_close_utc": "2026-10-04T15:23:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 43330,
+          "sha256": "97a1820b5f646e45e34ea268ae0cca2f033418e50e522b879c0ecf33a5249523"
+        },
+        "5m": {
+          "bars": 51970,
+          "first_open_utc": "2026-04-07T04:30:00+00:00",
+          "last_open_utc": "2026-10-04T15:15:00+00:00",
+          "last_close_utc": "2026-10-04T15:20:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 51970,
+          "sha256": "cc0d2889851b77307ed441e751edf9c9fef1db07dc5cf1ce2410d4ca9a7a6971"
+        },
+        "1h": {
+          "bars": 8890,
+          "first_open_utc": "2025-09-29T05:00:00+00:00",
+          "last_open_utc": "2026-10-04T14:00:00+00:00",
+          "last_close_utc": "2026-10-04T15:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 8890,
+          "sha256": "78506e66c195e35aa2f715f5b924161318bfcecec64426f7619e973f231a442f"
+        },
+        "4h": {
+          "bars": 2320,
+          "first_open_utc": "2025-09-12T20:00:00+00:00",
+          "last_open_utc": "2026-10-04T08:00:00+00:00",
+          "last_close_utc": "2026-10-04T12:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 2320,
+          "sha256": "d5cb5e9850541fbb0fedcad25e5c9d0d27229d6766e291b123547523d1e2475f"
+        },
+        "1d": {
+          "bars": 600,
+          "first_open_utc": "2025-02-11T00:00:00+00:00",
+          "last_open_utc": "2026-10-03T00:00:00+00:00",
+          "last_close_utc": "2026-10-04T00:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 600,
+          "sha256": "3defea6d74255b31c641a27465ac51821b00b4f7f6c19ec54e2e5ed021fc23fc"
+        },
+        "1w": {
+          "bars": 182,
+          "first_open_utc": "2023-04-03T00:00:00+00:00",
+          "last_open_utc": "2026-09-21T00:00:00+00:00",
+          "last_close_utc": "2026-09-28T00:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 182,
+          "sha256": "5d399bb5b21392fa1c469009f075a5827ed5cbb69fb7c99c765c833f8187b5f2"
+        }
+      },
+      "ETH_USDT": {
+        "1m": {
+          "bars": 43330,
+          "first_open_utc": "2026-09-04T13:13:00+00:00",
+          "last_open_utc": "2026-10-04T15:22:00+00:00",
+          "last_close_utc": "2026-10-04T15:23:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 43330,
+          "sha256": "6b2840f9183326895f53a02531f54e815fd70116a229d6d8023c86a31d613341"
+        },
+        "5m": {
+          "bars": 51970,
+          "first_open_utc": "2026-04-07T04:30:00+00:00",
+          "last_open_utc": "2026-10-04T15:15:00+00:00",
+          "last_close_utc": "2026-10-04T15:20:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 51970,
+          "sha256": "5483b8e1c1c120e3240d9cbd6cacb98b9ace60eefd90ae2d97ceaddc84fa30c6"
+        },
+        "1h": {
+          "bars": 8890,
+          "first_open_utc": "2025-09-29T05:00:00+00:00",
+          "last_open_utc": "2026-10-04T14:00:00+00:00",
+          "last_close_utc": "2026-10-04T15:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 8890,
+          "sha256": "3098ae7bb5940c6042efd18666dbcd1bcdbe917ff4cbd0daa2cfd744fbb647e7"
+        },
+        "4h": {
+          "bars": 2320,
+          "first_open_utc": "2025-09-12T20:00:00+00:00",
+          "last_open_utc": "2026-10-04T08:00:00+00:00",
+          "last_close_utc": "2026-10-04T12:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 2320,
+          "sha256": "5f453b95ded1f6610e9dff722c34b6d8194e6f9116f768b39359bb56cb6c793a"
+        },
+        "1d": {
+          "bars": 600,
+          "first_open_utc": "2025-02-11T00:00:00+00:00",
+          "last_open_utc": "2026-10-03T00:00:00+00:00",
+          "last_close_utc": "2026-10-04T00:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 600,
+          "sha256": "aaf8e91372a475b16b76d876ffe63a722b1c5e54da8054fe4b3e4149b1182f85"
+        },
+        "1w": {
+          "bars": 182,
+          "first_open_utc": "2023-04-03T00:00:00+00:00",
+          "last_open_utc": "2026-09-21T00:00:00+00:00",
+          "last_close_utc": "2026-09-28T00:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 182,
+          "sha256": "408a7c974f81f6b57488d465a32ab570d925e6879bd798e8d42859455f2181d9"
+        }
+      },
+      "ZEC_USDT": {
+        "1m": {
+          "bars": 43329,
+          "first_open_utc": "2026-09-04T13:14:00+00:00",
+          "last_open_utc": "2026-10-04T15:22:00+00:00",
+          "last_close_utc": "2026-10-04T15:23:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 43330,
+          "sha256": "ea7f10737d91c746b2e1bf65d9aca8c554948b4857794589f47cd1158ab46ba9"
+        },
+        "5m": {
+          "bars": 51969,
+          "first_open_utc": "2026-04-07T04:35:00+00:00",
+          "last_open_utc": "2026-10-04T15:15:00+00:00",
+          "last_close_utc": "2026-10-04T15:20:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 51970,
+          "sha256": "923d0679cacf63a6e0f234738cd34d3c19fcaa177da4ac6f6bc2b6e779513edb"
+        },
+        "1h": {
+          "bars": 8890,
+          "first_open_utc": "2025-09-29T05:00:00+00:00",
+          "last_open_utc": "2026-10-04T14:00:00+00:00",
+          "last_close_utc": "2026-10-04T15:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 8890,
+          "sha256": "5d92911cc03b6b659413269928a38033a0bf74cab0a969a05723094f716008e6"
+        },
+        "4h": {
+          "bars": 2320,
+          "first_open_utc": "2025-09-12T20:00:00+00:00",
+          "last_open_utc": "2026-10-04T08:00:00+00:00",
+          "last_close_utc": "2026-10-04T12:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 2320,
+          "sha256": "1c3eef346e2c8edf15043d368e2206fe7de107c9a1a49d22ff7a5408297adecc"
+        },
+        "1d": {
+          "bars": 600,
+          "first_open_utc": "2025-02-11T00:00:00+00:00",
+          "last_open_utc": "2026-10-03T00:00:00+00:00",
+          "last_close_utc": "2026-10-04T00:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 600,
+          "sha256": "04f40eb2ff550ae7c913180af3af0bb0c3191564cfb750dc6d229a6c281bde48"
+        },
+        "1w": {
+          "bars": 182,
+          "first_open_utc": "2023-04-03T00:00:00+00:00",
+          "last_open_utc": "2026-09-21T00:00:00+00:00",
+          "last_close_utc": "2026-09-28T00:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 182,
+          "sha256": "355416b210dd7e0f2bfd3f9514a8fb59bdd6b3ff43631bfc8da4e13d7bd74f2d"
+        }
+      },
+      "SOL_USDT": {
+        "1m": {
+          "bars": 43329,
+          "first_open_utc": "2026-09-04T13:14:00+00:00",
+          "last_open_utc": "2026-10-04T15:22:00+00:00",
+          "last_close_utc": "2026-10-04T15:23:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 43330,
+          "sha256": "80cb760ce95438117d7b55a1fc8f5164d17748a00112f1dbc2831e2d3f5f217c"
+        },
+        "5m": {
+          "bars": 51969,
+          "first_open_utc": "2026-04-07T04:35:00+00:00",
+          "last_open_utc": "2026-10-04T15:15:00+00:00",
+          "last_close_utc": "2026-10-04T15:20:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 51970,
+          "sha256": "22ad295796fe6d309feb4ccd370e542890ddc3943b89ac10f8fae83183e08536"
+        },
+        "1h": {
+          "bars": 8890,
+          "first_open_utc": "2025-09-29T05:00:00+00:00",
+          "last_open_utc": "2026-10-04T14:00:00+00:00",
+          "last_close_utc": "2026-10-04T15:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 8890,
+          "sha256": "8e628a4ff9beedc940b98056561d2e83d7e4aeef682d9dd2f6b0cb18bd9d937c"
+        },
+        "4h": {
+          "bars": 2320,
+          "first_open_utc": "2025-09-12T20:00:00+00:00",
+          "last_open_utc": "2026-10-04T08:00:00+00:00",
+          "last_close_utc": "2026-10-04T12:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 2320,
+          "sha256": "f7e3b6f80b7a7cc278202fe2f80d611d6ff4072852f5a17750b17697bbab62d0"
+        },
+        "1d": {
+          "bars": 600,
+          "first_open_utc": "2025-02-11T00:00:00+00:00",
+          "last_open_utc": "2026-10-03T00:00:00+00:00",
+          "last_close_utc": "2026-10-04T00:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 600,
+          "sha256": "c32eaa04a3f77f6f818a2351ff3615a8e702124b55d728e7481134853cd8c833"
+        },
+        "1w": {
+          "bars": 182,
+          "first_open_utc": "2023-04-03T00:00:00+00:00",
+          "last_open_utc": "2026-09-21T00:00:00+00:00",
+          "last_close_utc": "2026-09-28T00:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 182,
+          "sha256": "f7bf6693a85bdb133dad7a63b79519c9c99497e9f658238b169d73450ec4f3c9"
+        }
+      },
+      "DOGE_USDT": {
+        "1m": {
+          "bars": 43329,
+          "first_open_utc": "2026-09-04T13:14:00+00:00",
+          "last_open_utc": "2026-10-04T15:22:00+00:00",
+          "last_close_utc": "2026-10-04T15:23:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 43330,
+          "sha256": "c86b710ad323aac7e4ea806c369376ca8ec7f91c2abac324a8a9c59ae7500bfe"
+        },
+        "5m": {
+          "bars": 51969,
+          "first_open_utc": "2026-04-07T04:35:00+00:00",
+          "last_open_utc": "2026-10-04T15:15:00+00:00",
+          "last_close_utc": "2026-10-04T15:20:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 51970,
+          "sha256": "be66014a8fd892a959e2de2de1a3b56bf3c3647e7f038d6838a66d88b0a5cbe4"
+        },
+        "1h": {
+          "bars": 8890,
+          "first_open_utc": "2025-09-29T05:00:00+00:00",
+          "last_open_utc": "2026-10-04T14:00:00+00:00",
+          "last_close_utc": "2026-10-04T15:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 8890,
+          "sha256": "f167004b2426a5fdddbac1c3a0984e22164c665ec192cb0d23ae3df1660ef902"
+        },
+        "4h": {
+          "bars": 2320,
+          "first_open_utc": "2025-09-12T20:00:00+00:00",
+          "last_open_utc": "2026-10-04T08:00:00+00:00",
+          "last_close_utc": "2026-10-04T12:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 2320,
+          "sha256": "64ebfa8efec3341598228fe52c7494c9d7b769c4ebea9e177e1695b22a0f4de2"
+        },
+        "1d": {
+          "bars": 600,
+          "first_open_utc": "2025-02-11T00:00:00+00:00",
+          "last_open_utc": "2026-10-03T00:00:00+00:00",
+          "last_close_utc": "2026-10-04T00:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 600,
+          "sha256": "84012d303c39db7cd3d9017c4897120ca5033e7c614082766835863990cc48d6"
+        },
+        "1w": {
+          "bars": 182,
+          "first_open_utc": "2023-04-03T00:00:00+00:00",
+          "last_open_utc": "2026-09-21T00:00:00+00:00",
+          "last_close_utc": "2026-09-28T00:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 182,
+          "sha256": "383dcc280f231a274c5532e035248ab4eff90bf27bb9efba7c9d1759aed6ba29"
+        }
+      },
+      "XRP_USDT": {
+        "1m": {
+          "bars": 43329,
+          "first_open_utc": "2026-09-04T13:14:00+00:00",
+          "last_open_utc": "2026-10-04T15:22:00+00:00",
+          "last_close_utc": "2026-10-04T15:23:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 43330,
+          "sha256": "a2111b8b4ce8fa1f232dae76091518dd0d55693c21f6599a9a297030ebe4e3ec"
+        },
+        "5m": {
+          "bars": 51969,
+          "first_open_utc": "2026-04-07T04:35:00+00:00",
+          "last_open_utc": "2026-10-04T15:15:00+00:00",
+          "last_close_utc": "2026-10-04T15:20:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 51970,
+          "sha256": "79b5c05c492a18647ca401e2dc58760290851250791ad4207b0fe45efa94aada"
+        },
+        "1h": {
+          "bars": 8890,
+          "first_open_utc": "2025-09-29T05:00:00+00:00",
+          "last_open_utc": "2026-10-04T14:00:00+00:00",
+          "last_close_utc": "2026-10-04T15:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 8890,
+          "sha256": "a8d51423659223ec87ac35e1b8052c112b9d752fc725992f66565e8c80aefff2"
+        },
+        "4h": {
+          "bars": 2320,
+          "first_open_utc": "2025-09-12T20:00:00+00:00",
+          "last_open_utc": "2026-10-04T08:00:00+00:00",
+          "last_close_utc": "2026-10-04T12:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 2320,
+          "sha256": "742ffb7ba01c28e1945d5b4a76ed33569ec18903c1ce069b61b76bf00937cca3"
+        },
+        "1d": {
+          "bars": 600,
+          "first_open_utc": "2025-02-11T00:00:00+00:00",
+          "last_open_utc": "2026-10-03T00:00:00+00:00",
+          "last_close_utc": "2026-10-04T00:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 600,
+          "sha256": "ebec1feca7e2087e9da95ad73f09de0b0aea2e67fedf4a01e399c34ea9443b57"
+        },
+        "1w": {
+          "bars": 182,
+          "first_open_utc": "2023-04-03T00:00:00+00:00",
+          "last_open_utc": "2026-09-21T00:00:00+00:00",
+          "last_close_utc": "2026-09-28T00:00:00+00:00",
+          "missing_intervals": 0,
+          "requested_bars": 182,
+          "sha256": "c9cde646dd414aaf96aef9141cd231bed8ecaa9c3ccdacf51898764ac2f56faf"
+        }
+      }
+    },
+    "funding": {
+      "BTC_USDT": {
+        "status": "available",
+        "settlements": 1200,
+        "requested_start_utc": "2025-08-30T15:23:06.405000+00:00",
+        "first_settlement_utc": "2025-08-30T16:00:00+00:00",
+        "last_settlement_utc": "2026-10-04T08:00:00+00:00",
+        "maximum_gap_hours": 8.0,
+        "sha256": "ba42bd5aef0ad476d4bf82e099c3afcc589233b35cc4ac79157824e1cafd1100"
+      },
+      "ETH_USDT": {
+        "status": "available",
+        "settlements": 1200,
+        "requested_start_utc": "2025-08-30T15:23:06.405000+00:00",
+        "first_settlement_utc": "2025-08-30T16:00:00+00:00",
+        "last_settlement_utc": "2026-10-04T08:00:00+00:00",
+        "maximum_gap_hours": 8.0,
+        "sha256": "0c62939201304d0db25059ac5408faf262b525ced998a966864c68371c27040e"
+      },
+      "ZEC_USDT": {
+        "status": "available",
+        "settlements": 1200,
+        "requested_start_utc": "2025-08-30T15:23:06.405000+00:00",
+        "first_settlement_utc": "2025-08-30T16:00:00+00:00",
+        "last_settlement_utc": "2026-10-04T08:00:00+00:00",
+        "maximum_gap_hours": 8.0,
+        "sha256": "0aa679751a70cffd633b02efd4ea6feb734e83cfb79803af3b247b8ea51eb5a9"
+      },
+      "SOL_USDT": {
+        "status": "available",
+        "settlements": 1200,
+        "requested_start_utc": "2025-08-30T15:23:06.405000+00:00",
+        "first_settlement_utc": "2025-08-30T16:00:00+00:00",
+        "last_settlement_utc": "2026-10-04T08:00:00+00:00",
+        "maximum_gap_hours": 8.0,
+        "sha256": "375d92ad54a5e404ca20e7a2408a2e24a62fe291b5ec6337ffb8000c13a57559"
+      },
+      "DOGE_USDT": {
+        "status": "available",
+        "settlements": 1200,
+        "requested_start_utc": "2025-08-30T15:23:06.405000+00:00",
+        "first_settlement_utc": "2025-08-30T16:00:00+00:00",
+        "last_settlement_utc": "2026-10-04T08:00:00+00:00",
+        "maximum_gap_hours": 8.0,
+        "sha256": "5af8657db36d7d4bb00bd465f44609605284585fda479b4f825c6b3346df8140"
+      },
+      "XRP_USDT": {
+        "status": "available",
+        "settlements": 1200,
+        "requested_start_utc": "2025-08-30T15:23:06.405000+00:00",
+        "first_settlement_utc": "2025-08-30T16:00:00+00:00",
+        "last_settlement_utc": "2026-10-04T08:00:00+00:00",
+        "maximum_gap_hours": 8.0,
+        "sha256": "76fde2564bdb693d80ca5268452adf65a525bc58c4a26fd7a0140a2f20a7df4f"
+      }
+    }
+  },
+  "code_sha256": {
+    "backtest_suite.py": "7d6b424b82ebf49244c7d1714f481efd8f39c0e4605700da89f6365ec9e87282",
+    "replay.py": "51af4fc94d215ca6fccf3aebc857778eb2521e6b5eac96b3192a28847e7c975e",
+    "strategy/volium.py": "f441574eccf16ee11be6b8cfe710a523689d7294cb7f5b4b29f2e8b81d9992b2",
+    "config.py": "9efd44fe0a94ae7266bcec24cb1c52365d0ff4255be28bb3341e6fbb42fd6951"
+  },
+  "frozen_assumptions": {
+    "equity_per_symbol_usdt": 1000,
+    "risk_percent": 0.5,
+    "leverage_cap": 3,
+    "daily_loss_percent": 2,
+    "baseline_fee_bps_per_side": 5,
+    "baseline_slippage_bps_per_side": 2,
+    "stress_fee_bps_per_side": 10,
+    "stress_slippage_bps_per_side": 5,
+    "baseline_sessions_utc3": [
+      [
+        "10:00",
+        "12:00"
+      ],
+      [
+        "16:30",
+        "18:00"
+      ]
+    ],
+    "independent_symbol_accounts": true,
+    "no_parameter_selection_for_profit": true,
+    "unrealized_pnl_excluded_from_realized_metrics": true,
+    "marked_equity_and_drawdown_reported_separately": true,
+    "one_open_signal_per_symbol": true,
+    "actual_funding_rates": true,
+    "funding_position_value_uses_underlying_closed_price": true,
+    "liquidation_order_queue_excluded": true
+  },
+  "universe_provenance": {
+    "selected_at_utc": "2026-10-04T15:30:36.813916+00:00",
+    "ohlc_cutoff_utc": "2026-10-04T15:23:06.405000+00:00",
+    "selection_after_ohlc_cutoff_seconds": 450.408916,
+    "historical_dynamic_membership": false,
+    "bias_note": "The later current universe is fixed over the whole earlier historical period; this is retrospective composition/survivorship selection, not an as-of historical portfolio rule."
+  }
+}

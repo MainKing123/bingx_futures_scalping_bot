@@ -2,4 +2,12 @@ __pycache__/
 *.pyc
 .venv/
 .env
-scanner.db
+.env.*
+!.env.example
+*.db
+*.db-*
+.cache/
+.pytest_cache/
+backtest*.json
+!docs/backtest_evidence.json
+outputs/

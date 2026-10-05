@@ -1,299 +1,42 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BingX Setup Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/styles.css">
-</head>
-<body>
-  <div class="bg-shape bg-shape-a"></div>
-  <div class="bg-shape bg-shape-b"></div>
-  <div class="bg-grid"></div>
-
-  <div class="layout">
-    <header class="panel hero">
-      <div>
-        <p class="eyebrow">SMC / ICT Scanner</p>
-        <h1>Trade Setup Monitor</h1>
-        <p class="subtle">Live view of setups, watchlist, and scanner health</p>
-      </div>
-      <div class="hero-actions">
-        <span id="wsBadge" class="badge badge-offline">WS Offline</span>
-        <a class="link-button" href="/docs" target="_blank" rel="noreferrer">Open API Docs</a>
-      </div>
-    </header>
-
-    <section class="metrics">
-      <article class="panel metric-card">
-        <p class="metric-label">Total Setups</p>
-        <p id="metricTotal" class="metric-value">0</p>
-      </article>
-      <article class="panel metric-card">
-        <p class="metric-label">Active Setups</p>
-        <p id="metricActive" class="metric-value">0</p>
-      </article>
-      <article class="panel metric-card">
-        <p class="metric-label">Win Rate</p>
-        <p id="metricWinRate" class="metric-value">0%</p>
-      </article>
-      <article class="panel metric-card">
-        <p class="metric-label">Watchlist</p>
-        <p id="metricWatchlist" class="metric-value">0</p>
-      </article>
-      <article class="panel metric-card">
-        <p class="metric-label">Volatile Pairs</p>
-        <p id="metricVolatile" class="metric-value">0</p>
-      </article>
-    </section>
-
-    <section class="panel controls">
-      <div class="controls-grid">
-        <label>
-          <span>Search</span>
-          <input id="searchInput" type="text" placeholder="BTC-USDT, ETH-USDT...">
-        </label>
-        <label>
-          <span>Status</span>
-          <select id="statusFilter">
-            <option value="">All</option>
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="TP1_HIT">TP1_HIT</option>
-            <option value="TP2_HIT">TP2_HIT</option>
-            <option value="TP3_HIT">TP3_HIT</option>
-            <option value="SL_HIT">SL_HIT</option>
-            <option value="EXPIRED">EXPIRED</option>
-            <option value="CANCELLED">CANCELLED</option>
-          </select>
-        </label>
-        <label>
-          <span>Direction</span>
-          <select id="directionFilter">
-            <option value="">All</option>
-            <option value="LONG">LONG</option>
-            <option value="SHORT">SHORT</option>
-          </select>
-        </label>
-        <label>
-          <span>Confidence</span>
-          <select id="confidenceFilter">
-            <option value="">All</option>
-            <option value="HIGH">HIGH</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="LOW">LOW</option>
-          </select>
-        </label>
-      </div>
-      <div class="controls-actions">
-        <button id="refreshBtn" type="button">Refresh</button>
-        <label class="toggle">
-          <input id="autoRefreshToggle" type="checkbox" checked>
-          <span>Auto refresh 10s</span>
-        </label>
-      </div>
-    </section>
-
-    <main class="content-grid">
-      <section class="panel setups-panel">
-        <div class="panel-header">
-          <h2>Setups</h2>
-          <span id="setupsCount" class="pill">0</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Symbol</th>
-                <th>Dir</th>
-                <th>Status</th>
-                <th>Conf</th>
-                <th>Entry</th>
-                <th>SL</th>
-                <th>RR</th>
-              </tr>
-            </thead>
-            <tbody id="setupsBody"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <aside class="side-stack">
-        <section class="panel tv-panel">
-          <div class="panel-header">
-            <h2>TradingView</h2>
-            <span id="tvSourceBadge" class="pill">-</span>
-          </div>
-          <div class="tv-actions">
-            <button id="tvSwitchSource" type="button">Switch Source</button>
-            <a id="tvOpenLink" class="link-button" href="#" target="_blank" rel="noreferrer">Open in TradingView</a>
-          </div>
-          <div id="selectedSetupCard" class="selected-setup-card">
-            <p class="empty">Select a setup row to load chart</p>
-          </div>
-          <div class="tv-frame-wrap">
-            <iframe id="tvFrame" title="TradingView chart" loading="lazy"></iframe>
-          </div>
-        </section>
-
-        <section class="panel analysis-panel">
-          <div class="panel-header">
-            <h2>CRT+ICT Analysis</h2>
-            <span id="analysisSignalBadge" class="pill">NO_SIGNAL</span>
-          </div>
-          <div id="crtAnalysisCard" class="analysis-card">
-            <div class="analysis-line"><span>Ликвидность</span><strong id="analysisLiquidity">-</strong></div>
-            <div class="analysis-line"><span>CRT</span><strong id="analysisCRT">-</strong></div>
-            <div class="analysis-line"><span>ICT</span><strong id="analysisICT">-</strong></div>
-            <div class="analysis-line"><span>Сессия</span><strong id="analysisSession">-</strong></div>
-            <div class="analysis-line"><span>Сигнал</span><strong id="analysisSignal">NO_SIGNAL</strong></div>
-            <div class="analysis-line"><span>Вход</span><strong id="analysisEntry">-</strong></div>
-            <div class="analysis-line"><span>Стоп</span><strong id="analysisStop">-</strong></div>
-            <div class="analysis-line"><span>Цели</span><strong id="analysisTargets">-</strong></div>
-            <div class="analysis-line"><span>RR</span><strong id="analysisRR">-</strong></div>
-          </div>
-        </section>
-
-        <section class="panel volatile-panel">
-          <div class="panel-header">
-            <h2>Top Volatile Pairs</h2>
-            <span id="volatileCount" class="pill">0</span>
-          </div>
-          <div id="volatileList" class="volatile-list"></div>
-        </section>
-
-        <section class="panel watchlist-panel">
-          <div class="panel-header">
-            <h2>Watchlist</h2>
-            <span id="watchlistCount" class="pill">0</span>
-          </div>
-          <div id="watchlistList" class="watchlist-list"></div>
-        </section>
-
-        <section class="panel events-panel">
-          <div class="panel-header">
-            <h2>Live Events</h2>
-          </div>
-          <div id="eventsLog" class="events-log"></div>
-        </section>
-      </aside>
-    </main>
-
-    <section class="panel strategy-panel">
-      <div class="panel-header">
-        <h2>Strategy Lab</h2>
-        <span id="backtestStatusBadge" class="badge badge-offline">Idle</span>
-      </div>
-
-      <form id="backtestForm" class="strategy-form">
-        <label>
-          <span>Strategy</span>
-          <select id="backtestStrategy">
-            <option value="crt_ict">CRT+ICT</option>
-            <option value="legacy_choch_ob">Legacy CHOCH_OB</option>
-          </select>
-        </label>
-        <label>
-          <span>Mode</span>
-          <select id="backtestMode">
-            <option value="batch">batch (top-20)</option>
-            <option value="single">single</option>
-          </select>
-        </label>
-        <label>
-          <span>Symbol</span>
-          <input id="backtestSymbol" type="text" placeholder="BTC-USDT">
-        </label>
-        <label>
-          <span>Lookback days</span>
-          <input id="backtestLookbackDays" type="number" min="1" max="30" value="14">
-        </label>
-        <label>
-          <span>Profile</span>
-          <select id="backtestProfile">
-            <option value="default">default</option>
-            <option value="conservative">conservative</option>
-            <option value="aggressive">aggressive</option>
-            <option value="high_rr">high_rr</option>
-          </select>
-        </label>
-        <label>
-          <span>LTF</span>
-          <select id="backtestLtf">
-            <option value="1m">1m</option>
-            <option value="3m">3m</option>
-            <option value="5m">5m</option>
-            <option value="15m">15m</option>
-          </select>
-        </label>
-        <label>
-          <span>HTF</span>
-          <select id="backtestHtf">
-            <option value="30m">30m</option>
-            <option value="1h">1h</option>
-            <option value="4h">4h</option>
-          </select>
-        </label>
-        <div class="strategy-form-actions">
-          <button id="runBacktestBtn" type="submit">Run Backtest</button>
-        </div>
-      </form>
-
-      <div class="strategy-progress">
-        <div class="progress-label">
-          <span id="backtestJobLabel">No active backtest</span>
-          <span id="backtestProgressText">0%</span>
-        </div>
-        <div class="progress-track">
-          <div id="backtestProgressBar" class="progress-fill"></div>
-        </div>
-      </div>
-
-      <div class="strategy-metrics">
-        <article class="metric-mini">
-          <p>Trades</p>
-          <strong id="btTrades">0</strong>
-        </article>
-        <article class="metric-mini">
-          <p>Win Rate</p>
-          <strong id="btWinRate">0%</strong>
-        </article>
-        <article class="metric-mini">
-          <p>Expectancy</p>
-          <strong id="btExpectancy">0</strong>
-        </article>
-        <article class="metric-mini">
-          <p>Profit Factor</p>
-          <strong id="btProfitFactor">0</strong>
-        </article>
-        <article class="metric-mini">
-          <p>Max Drawdown</p>
-          <strong id="btMaxDD">0</strong>
-        </article>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Symbol</th>
-              <th>Trades</th>
-              <th>Win Rate</th>
-              <th>Expectancy</th>
-              <th>Profit Factor</th>
-              <th>Max DD</th>
-              <th>PnL %</th>
-            </tr>
-          </thead>
-          <tbody id="backtestResultsBody"></tbody>
-        </table>
-      </div>
-    </section>
-  </div>
-
-  <script src="/static/app.js" defer></script>
-</body>
-</html>
+<html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MEXC · VOLIUM</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#111820;color:#e8edf2}
+body{max-width:1120px;margin:auto;padding:36px 24px}h1{font-size:30px;margin-bottom:6px}
+small,.muted{color:#9aabba}header{display:flex;justify-content:space-between;align-items:center;gap:24px}
+.badge{padding:9px 14px;border:1px solid #546879;border-radius:24px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:28px 0}
+.card,section{background:#1c2632;border:1px solid #30404e;border-radius:14px;padding:22px}
+.value{font-size:25px;font-weight:650;margin-top:12px}section{margin:20px 0}table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:13px 10px;border-bottom:1px solid #30404e}th{color:#9aabba;font-weight:500}a{color:#74cbd8}
+#issues{color:#ffc875;white-space:pre-wrap}#notice{color:#9aabba;line-height:1.6}.scroll{overflow:auto}
+@media(max-width:740px){.grid{grid-template-columns:repeat(2,1fr)}body{padding:20px 12px}header{align-items:start}}
+</style>
+<header><div><h1>MEXC <span class="muted">/</span> VOLIUM</h1><small>Ликвидность → подтверждение → ретест · RR 1:2</small></div><div class="badge" id="mode">Загрузка…</div></header>
+<div class="grid"><div class="card"><small>Сетап</small><div class="value" id="strategy">—</div></div>
+<div class="card"><small>Занятые слоты</small><div class="value" id="slots">—</div></div>
+<div class="card"><small>Результат за день, USDT</small><div class="value" id="pnl">—</div></div>
+<div class="card"><small>Риск на сделку</small><div class="value" id="risk">—</div></div></div>
+<section><small>Состояние сканера</small><p id="scan">Ожидание первой проверки закрытых свечей.</p><div id="issues"></div><p id="notice"></p></section>
+<section><h2>Пять торговых пар</h2><p class="muted" id="universe-note">Проверенные крупные активы с ликвидными фьючерсами MEXC.</p><div class="scroll"><table><thead><tr><th>Пара</th><th>Ранг капитализации</th><th>Капитализация USD</th><th>Оборот за 24ч USD</th><th>NATR за 24ч, %</th></tr></thead><tbody id="pairs"></tbody></table></div></section>
+<section><h2>Журнал сигналов</h2><div class="scroll"><table><thead><tr><th>Время UTC</th><th>Пара / сторона</th><th>Вход</th><th>Стоп / % цены</th><th>Цель</th><th>Плечо</th><th>RR после издержек</th><th>Статус</th><th>PnL USDT</th><th>ROI на маржу</th></tr></thead><tbody id="rows"></tbody></table></div><p id="empty" class="muted">Сигналов пока нет. Бот ждёт выполнения всех условий стратегии.</p><p class="muted">ROI на маржу относится к отдельной позиции. Результат счёта показан в USDT; плечо не заменяет торгового преимущества.</p></section>
+<p class="muted">Режим и параметры задаются в локальном .env. Реальная торговля отключена по умолчанию. <a href="/docs">API</a> · <a href="https://www.youtube.com/watch?v=jYvt1hSTPxc" target="_blank" rel="noopener">Первое видео</a> · <a href="https://www.youtube.com/watch?v=bL4z-AjkNY0" target="_blank" rel="noopener">Разбор от А до Я</a></p>
+<script>
+const $=id=>document.getElementById(id);const names={intraday:"Внутридневной",scalp:"Скальпинг",swing:"Свинг"};
+async function refresh(){try{const responses=await Promise.all([fetch("/api/status"),fetch("/api/setups")]);if(responses.some(r=>!r.ok))throw Error("status");
+const [s,rows]=await Promise.all(responses.map(r=>r.json()));
+$("mode").textContent=(s.mode==="paper"?"Бумажные сделки":"Реальные ордера")+(s.entries_paused?" · входы приостановлены":"");
+$("strategy").textContent=names[s.strategy];$("slots").textContent=s.reserved_slots;$("pnl").textContent=s.daily_pnl_usdt.toFixed(2);$("risk").textContent=s.risk_per_trade_percent+"%";
+$("scan").textContent=s.last_scan_at?"Последняя проверка: "+new Date(s.last_scan_at).toLocaleString("ru-RU")+" · "+s.symbols.join(", "):"Ожидание первой проверки закрытых свечей.";
+$("issues").textContent=Object.entries(s.errors).map(([k,v])=>k+": "+v).join("\n");
+const rejected=Object.entries(s.execution_rejections||{});if(rejected.length)$("issues").textContent+="\nОтфильтрованные заявки:\n"+rejected.map(([k,v])=>k+": "+v).join("\n");
+if(s.selection_error)$("issues").textContent+="\n"+s.selection_error;
+const session=s.strategy==="swing"?"Свинг: без фильтра сессий":s.session_clock==="market_local"?"Сессии: "+s.market_sessions.map(x=>x[0]+" "+x[1]+"–"+x[2]).join(", "):"Сессии: "+s.session_utc3.map(x=>x.join("–")).join(", ")+" (UTC+3)";
+$("notice").textContent=session+". Цена входа ожидается лимитной заявкой; сигнал ещё не означает исполненную сделку. "+(s.strategy_is_experimental?(s.strategy_profile==="v6_current_leg"?"Экспериментальная V6 проходит бумажную проверку. ":"Экспериментальная V5 проходит бумажную проверку. "):"")+"Плечо до "+s.leverage_cap+"×; стоп и риск проходят проверку с издержками.";
+$("universe-note").textContent=s.pair_selection==="fixed"?"Пять явно заданных контрактов.":(s.universe_core_symbols||[]).length?s.universe_core_symbols.join(", ")+" + наиболее волатильные остальные: все проходят топ-20 по капитализации и проверку оборота MEXC.":"Топ-20 по капитализации → ликвидность MEXC → пять самых волатильных за 24 часа.";
+$("rows").replaceChildren();$("empty").hidden=rows.length>0;
+$("pairs").replaceChildren();for(const p of s.selected_pairs){let tr=document.createElement("tr");for(const v of [p.symbol,p.market_cap_rank,Number(p.market_cap_usd).toLocaleString("ru-RU"),Number(p.quoteVolume).toLocaleString("ru-RU"),Number(p.natr_percent).toFixed(3)]){let td=document.createElement("td");td.textContent=v;tr.append(td)}$("pairs").append(tr)}
+for(const row of rows){let tr=document.createElement("tr");const e=row.economics||{};const roi=row.pnl_usdt!=null&&e.initial_margin_usdt>0?(100*row.pnl_usdt/e.initial_margin_usdt).toFixed(2)+"%":"—";for(const value of [row.timestamp.replace("T"," ").slice(0,19),row.symbol+" "+row.direction,row.entry.toFixed(3),row.stop_loss.toFixed(3)+" / "+(100*Math.abs(row.entry-row.stop_loss)/row.entry).toFixed(2)+"%",row.take_profits[0].toFixed(3),row.leverage?row.leverage+"×":"—",e.net_reward_risk==null?"—":e.net_reward_risk.toFixed(2),row.status+(row.paper_filled_at?" · вход исполнен":""),row.pnl_usdt==null?"—":row.pnl_usdt.toFixed(2),roi]){let td=document.createElement("td");td.textContent=value;tr.append(td)}$("rows").append(tr)}
+}catch(e){$("issues").textContent="Нет соединения с локальным ботом."}}
+refresh();setInterval(refresh,10000);
+</script></html>

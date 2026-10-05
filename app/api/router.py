@@ -1,222 +1,80 @@
 from __future__ import annotations
 
+import math
+
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import select
-
-from app.backtest.schemas import BacktestRunRequest, BacktestRunStatusResponse, BacktestSummary
 from app.db.engine import SessionLocal
-from app.db.models import DailyStats, SetupRecord
-from app.db.repository import aggregate_stats, record_to_setup, setups_query, update_setup_status
-from app.schemas.analysis import CRTICTAnalysisResponse
-from app.schemas.setup import MarketOverview, TradeSetup
-from app.tradingview import symbol_to_tv_candidates, timeframe_to_tv_interval
+from app.db.models import ExecutionRecord, SetupRecord
+from app.db.repository import record_to_setup, setups_query
 
 router = APIRouter(prefix="/api")
 
 
-@router.get("/setups", response_model=list[TradeSetup])
-async def get_setups(status: str | None = None, direction: str | None = None, confidence: str | None = None, symbol: str | None = None, limit: int = 50):
-    async with SessionLocal() as session:
-        rows = await session.scalars(setups_query(status, direction, confidence, symbol).limit(limit))
-        return [record_to_setup(row) for row in rows.all()]
-
-
-@router.get("/setups/{setup_id}", response_model=TradeSetup)
-async def get_setup_detail(setup_id: str):
-    async with SessionLocal() as session:
-        rec = await session.get(SetupRecord, setup_id)
-        if rec is None:
-            raise HTTPException(status_code=404, detail="Setup not found")
-        return record_to_setup(rec)
-
-
-@router.get("/watchlist", response_model=list[dict])
-async def get_watchlist(request: Request):
-    scanner = request.app.state.scanner
-    return [
-        {
-            "symbol": x.symbol,
-            "poi_zone": x.poi_zone,
-            "added_at": x.added_at,
-            "last_checked": x.last_checked,
-            "bias": x.htf_analysis.bias,
-        }
-        for x in scanner.watchlist.values()
-    ]
-
-
-@router.get("/scanner/volatile-pairs", response_model=list[dict])
-async def get_volatile_pairs(request: Request):
-    return request.app.state.scanner.volatile_pairs
-
-
-@router.post("/backtest/run", response_model=BacktestRunStatusResponse)
-async def run_backtest(payload: BacktestRunRequest, request: Request):
-    return await request.app.state.backtest_service.start(payload)
-
-
-@router.get("/backtest/jobs/{job_id}", response_model=BacktestRunStatusResponse)
-async def get_backtest_job_status(job_id: str, request: Request):
-    status = request.app.state.backtest_service.get_status(job_id)
-    if status is None:
-        raise HTTPException(status_code=404, detail="Backtest job not found")
-    return status
-
-
-@router.get("/backtest/jobs/{job_id}/result", response_model=BacktestSummary)
-async def get_backtest_job_result(job_id: str, request: Request):
-    status = request.app.state.backtest_service.get_status(job_id)
-    if status is None:
-        raise HTTPException(status_code=404, detail="Backtest job not found")
-    if status.status != "completed":
-        raise HTTPException(status_code=409, detail=f"Backtest job status is {status.status}")
-    result = request.app.state.backtest_service.get_result(job_id)
-    if result is None:
-        raise HTTPException(status_code=404, detail="Backtest result not found")
-    return result
-
-
-@router.get("/backtest/latest", response_model=BacktestSummary)
-async def get_latest_backtest(request: Request):
-    result = request.app.state.backtest_service.get_latest_result()
-    if result is None:
-        raise HTTPException(status_code=404, detail="No completed backtest yet")
-    return result
-
-
-@router.get("/tradingview/symbol/{symbol}")
-async def resolve_tradingview_symbol(symbol: str, request: Request):
-    return {
-        "input_symbol": symbol.upper(),
-        "candidates": symbol_to_tv_candidates(symbol),
-        "default_interval": timeframe_to_tv_interval(request.app.state.settings.ltf_timeframe),
-    }
-
-
-@router.get("/analysis/{symbol}", response_model=CRTICTAnalysisResponse)
-async def get_crt_analysis(symbol: str, request: Request, ltf_timeframe: str | None = None):
-    requested_tf = (ltf_timeframe or "").lower()
-    if requested_tf and requested_tf not in {"5m", "15m"}:
-        raise HTTPException(status_code=422, detail="ltf_timeframe must be one of: 5m, 15m")
-    analysis, _ = await request.app.state.engine.analyze_crt_ict(symbol.upper(), requested_tf or None)
-    return analysis
-
-
-@router.get("/market-structure/{symbol}", response_model=MarketOverview)
-async def get_market_structure(symbol: str, request: Request):
-    return await request.app.state.engine.get_market_overview(symbol)
-
-
-@router.get("/stats")
-async def get_stats(period: str = "7d"):
-    async with SessionLocal() as session:
-        stats = await aggregate_stats(session)
-        stats["period"] = period
-        return stats
-
-
-@router.get("/stats/equity-curve", response_model=list[dict])
-async def get_equity_curve(period: str = "30d"):
-    async with SessionLocal() as session:
-        rows = await session.scalars(select(DailyStats).order_by(DailyStats.date.asc()))
-        cumulative = 0.0
-        curve = []
-        for row in rows.all():
-            cumulative += row.total_pnl_percent
-            curve.append({"date": row.date, "cumulative_pnl_percent": round(cumulative, 4)})
-        return curve
-
-
-@router.get("/account/balance")
-async def get_account_balance(request: Request):
-    return await request.app.state.client.get_balance()
-
-
-@router.get("/account/positions")
-async def get_account_positions(request: Request):
-    return await request.app.state.client.get_positions()
-
-
-@router.patch("/setups/{setup_id}/cancel")
-async def cancel_setup(setup_id: str):
-    async with SessionLocal() as session:
-        await update_setup_status(session, setup_id, "CANCELLED")
-        rec = await session.get(SetupRecord, setup_id)
-        if rec is None:
-            raise HTTPException(status_code=404, detail="Setup not found")
-        return record_to_setup(rec)
+@router.get("/status")
+async def status(request: Request):
+    state = request.app.state
+    try:
+        marked = state.risk_manager.balance if state.settings.auto_execution else getattr(state.tracker, "marked_equity", state.risk_manager.balance)
+        if not isinstance(marked, (int, float)) or not math.isfinite(marked):
+            marked = None
+    except ValueError:
+        marked = None
+    return {"exchange":"MEXC", "mode":"live" if state.settings.auto_execution else "paper",
+        "strategy":state.settings.volium_mode, "symbols":state.scanner.active_symbols,
+        "strategy_profile":getattr(state.settings, "volium_strategy_profile", "v1_guarded"),
+        "strategy_is_experimental":getattr(state.settings, "volium_strategy_profile", "").startswith(("v5", "v6")),
+        "universe_core_symbols":getattr(state.settings, "universe_core_symbols", []),
+        "entries_paused":not state.risk_manager.can_open_setup() or bool(state.scanner.selection_error) or marked is None, "reserved_slots":state.risk_manager.open_setups,
+        "equity_usdt":state.risk_manager.balance,
+        "marked_equity_usdt":marked,
+        "unrealized_pnl_usdt":None if marked is None else marked-state.risk_manager.balance,
+        "daily_opening_equity_usdt":state.risk_manager.daily_opening_balance,
+        "daily_opening_equity_source":state.risk_manager.daily_opening_balance_source,
+        "daily_pnl_usdt":state.risk_manager.get_daily_pnl(),
+        "last_scan_at":state.scanner.last_scan_at,"errors":state.scanner.last_errors,
+        "execution_rejections":state.scanner.last_rejections,
+        "leverage_cap":state.settings.default_leverage,
+        "leverage_asset_caps":getattr(state.settings, "leverage_asset_caps", {}),
+        "execution_cost_guard":getattr(state.settings, "execution_cost_guard_enabled", False),
+        "session_utc3":state.settings.volium_sessions_utc3,
+        "session_clock":state.settings.volium_session_clock,
+        "market_sessions":state.settings.volium_market_sessions,
+        "pair_selection":state.settings.pair_selection,
+        "selected_pairs":state.scanner.selected_pairs,
+        "selection_error":state.scanner.selection_error,
+        "session_note":"BTC/ETH: 10:00–12:00 UTC+3; afternoon 16:30 needs an explicit end time",
+        "risk_per_trade_percent":state.settings.risk_per_trade_percent}
 
 
 @router.get("/config")
-async def get_config(request: Request):
-    settings = request.app.state.settings
-    return {
-        "top_pairs_count": settings.top_pairs_count,
-        "scan_interval_seconds": settings.scan_interval_seconds,
-        "min_daily_volume_usd": settings.min_daily_volume_usd,
-        "volatility_pool_size": settings.volatility_pool_size,
-        "volatility_lookback_candles": settings.volatility_lookback_candles,
-        "volatility_interval": settings.volatility_interval,
-        "max_poi_distance_pct": settings.max_poi_distance_pct,
-        "strategy_live_mode": settings.strategy_live_mode,
-        "risk_per_trade_percent": settings.risk_per_trade_percent,
-        "max_open_setups": settings.max_open_setups,
-        "daily_loss_limit_percent": settings.daily_loss_limit_percent,
-        "active_sessions": settings.active_sessions,
-        "crt_killzone_enabled": settings.crt_killzone_enabled,
-        "crt_london_session": settings.crt_london_session,
-        "crt_new_york_session": settings.crt_new_york_session,
-        "crt_range_lookback": settings.crt_range_lookback,
-        "crt_min_sweep_pct": settings.crt_min_sweep_pct,
-        "crt_min_wick_body_ratio": settings.crt_min_wick_body_ratio,
-        "crt_equal_level_tolerance": settings.crt_equal_level_tolerance,
-        "crt_mss_lookback": settings.crt_mss_lookback,
-        "crt_stop_buffer_bps": settings.crt_stop_buffer_bps,
-        "crt_min_rr": settings.crt_min_rr,
-        "crt_entry_timeframes": settings.crt_entry_timeframes,
-        "auto_execution": settings.auto_execution,
-        "backtest_fee_bps": settings.backtest_fee_bps,
-        "backtest_slippage_bps": settings.backtest_slippage_bps,
-        "backtest_cooldown_candles": settings.backtest_cooldown_candles,
-        "backtest_default_lookback_days": settings.backtest_default_lookback_days,
-        "backtest_max_lookback_days": settings.backtest_max_lookback_days,
-    }
+async def config(request: Request):
+    # Credentials are excluded by their schema and never appear in this endpoint.
+    return request.app.state.settings.model_dump(mode="json")
 
 
-@router.patch("/config")
-async def update_config(updates: dict, request: Request):
-    settings = request.app.state.settings
-    updatable = {
-        "top_pairs_count",
-        "min_daily_volume_usd",
-        "volatility_pool_size",
-        "volatility_lookback_candles",
-        "volatility_interval",
-        "max_poi_distance_pct",
-        "strategy_live_mode",
-        "risk_per_trade_percent",
-        "max_open_setups",
-        "daily_loss_limit_percent",
-        "active_sessions",
-        "crt_killzone_enabled",
-        "crt_london_session",
-        "crt_new_york_session",
-        "crt_range_lookback",
-        "crt_min_sweep_pct",
-        "crt_min_wick_body_ratio",
-        "crt_equal_level_tolerance",
-        "crt_mss_lookback",
-        "crt_stop_buffer_bps",
-        "crt_min_rr",
-        "crt_entry_timeframes",
-        "min_risk_reward",
-        "backtest_fee_bps",
-        "backtest_slippage_bps",
-        "backtest_cooldown_candles",
-        "backtest_default_lookback_days",
-        "backtest_max_lookback_days",
-    }
-    for key, value in updates.items():
-        if key in updatable and hasattr(settings, key):
-            setattr(settings, key, value)
-    return await get_config(request)
+@router.get("/setups")
+async def setups(limit: int = 100):
+    async with SessionLocal() as session:
+        rows = (await session.scalars(setups_query().limit(max(1,min(limit,500))))).all()
+        return [{**record_to_setup(row).model_dump(mode="json"), "execution_mode":row.execution_mode,
+            "paper_filled_at":row.paper_filled_at,"pnl_usdt":row.pnl_usdt} for row in rows]
+
+
+@router.get("/executions")
+async def executions():
+    async with SessionLocal() as session:
+        rows = (await session.scalars(select(ExecutionRecord).order_by(ExecutionRecord.created_at.desc()).limit(100))).all()
+        return [{"setup_id":r.setup_id,"symbol":r.symbol,"state":r.state,"order_id":r.order_id,
+                 "volume":r.volume,"actual_entry":r.actual_entry,"realized_pnl":r.realized_pnl,
+                 "error":r.error,"updated_at":r.updated_at} for r in rows]
+
+
+@router.post("/setups/{setup_id}/cancel")
+async def cancel(setup_id: str, request: Request):
+    try:
+        return await request.app.state.tracker.cancel(setup_id)
+    except ValueError as exc:
+        raise HTTPException(409,detail=str(exc)) from None
+    except Exception:
+        raise HTTPException(503,detail="Exchange confirmation unavailable; state retained") from None

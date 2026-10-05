@@ -1,0 +1,594 @@
+{
+  "audit": "v5_causal_source_case_review",
+  "created_at_utc": "2026-10-05T00:20:13.230670+00:00",
+  "source_video": "https://www.youtube.com/watch?v=bL4z-AjkNY0",
+  "helper_sha256": "3c841b60b6224ee1c1e63c9bbc71f79631d21b4669147b3bc8124820c2640c83",
+  "selection_policy": "first filled closed record by entry_time, fixed universe order on ties; fallback first generated setup",
+  "profit_based_selection": false,
+  "post_signal_fill_metadata_used_for_selection": true,
+  "additional_wallet_trials": 0,
+  "additional_parameters": 0,
+  "signed_code_modified": false,
+  "validation_or_final_results_opened": false,
+  "status": [
+    {
+      "venue": "mexc",
+      "mode": "intraday",
+      "status": "reviewed",
+      "selection": "first_chronological_filled_closed_record",
+      "signal_time": "2026-01-12T14:40:00+00:00"
+    },
+    {
+      "venue": "binance_usdm",
+      "mode": "intraday",
+      "status": "no_generated_equal_setup_in_train",
+      "registered_positive_outputs": 0
+    },
+    {
+      "venue": "binance_usdm",
+      "mode": "scalp",
+      "status": "reviewed",
+      "selection": "first_chronological_filled_closed_record",
+      "signal_time": "2024-11-21T14:44:00+00:00"
+    }
+  ],
+  "cases": [
+    {
+      "venue": "mexc",
+      "mode": "intraday",
+      "symbol": "BTC_USDT",
+      "signal_time": "2026-01-12T14:40:00+00:00",
+      "selection": "first_chronological_filled_closed_record",
+      "candidate": "v5-equal-cost",
+      "phase": "train",
+      "cost_variant": "baseline",
+      "forward_price_or_pnl_fields_used": false,
+      "post_signal_fill_metadata_used_for_selection": true,
+      "outcome_bars_displayed": false,
+      "author_chart_exact_match": false,
+      "plan_sha256": "07053a68410e3ded5cdd33f021fd37c0a0b4d6e00c89068522f2dc89c9b464bf",
+      "data_manifest_sha256": "e8faddde2751b55eed282ec8c02bb81df1d39c8d0d0514a9b1c4ab91060c0fe0",
+      "source_data_sha256": {
+        "BTC_USDT_1d.csv": "3defea6d74255b31c641a27465ac51821b00b4f7f6c19ec54e2e5ed021fc23fc",
+        "BTC_USDT_1h.csv": "78506e66c195e35aa2f715f5b924161318bfcecec64426f7619e973f231a442f",
+        "BTC_USDT_5m.csv": "1416d55900b2f2a3f1e5c28a6ae9051cd5cd683954ed5ec65e3dfeceede903db"
+      },
+      "source_review": {
+        "path": "C:\\Users\\Lenovo\\Documents\\Codex\\2026-10-05\\new-chat\\work\\bingx_futures_scalping_bot\\docs\\strategy_v5.md",
+        "sha256": "66b5476f404fd325e62add4aee9c9c3061712c4c5d2efe3c51ff574a5616e709"
+      },
+      "provider_sha256": "511c6ebc592c2649ebd97e2b9f80c048bd180faad6ffa02fe5ffaa0bc2dfaacb",
+      "parameters": {
+        "liquidity_mode": "equal_clusters",
+        "recovery_fraction": 0.3333333333333333,
+        "max_wait_bars": 12
+      },
+      "history_bars": {
+        "1d": 110,
+        "1h": 110,
+        "5m": 990
+      },
+      "diagnostic": {
+        "accepted": true,
+        "setup": {
+          "id": "774365dd0731c104555b",
+          "timestamp": "2026-01-12T14:40:00Z",
+          "symbol": "BTC_USDT",
+          "direction": "LONG",
+          "setup_type": "VOLIUM_INTRADAY",
+          "htf_bias": "BULLISH",
+          "entry": 90868.05598666666,
+          "stop_loss": 90062.08398000001,
+          "take_profits": [
+            92480.0
+          ],
+          "risk_reward": 2.0,
+          "confidence": "MEDIUM",
+          "confluences": [
+            "Experimental v5; declared causal interpretation",
+            "frozen v1 numeric context",
+            "D1/H1 aligned",
+            "1h equal_clusters liquidity raid",
+            "fvg_inversion",
+            "Whole-correction recovery 0.3532",
+            "Full known raid extreme stop; structural target; fixed 2R retest"
+          ],
+          "status": "ACTIVE",
+          "position_size_usdt": null
+        },
+        "reason": "accepted",
+        "features": {
+          "version": "experimental_v5",
+          "mode": "intraday",
+          "parameters": {
+            "liquidity_mode": "equal_clusters",
+            "recovery_fraction": 0.3333333333333333,
+            "max_wait_bars": 12
+          },
+          "direction": "LONG",
+          "context_method": "frozen v1 numeric context",
+          "context_target": 94700.0,
+          "context_target_open_utc": "2026-01-05T00:00:00+00:00",
+          "context_target_known_close_utc": "2026-01-08T00:00:00+00:00",
+          "h1_direction": "LONG",
+          "raid_start_open_utc": "2026-01-12T14:20:00+00:00",
+          "sweep_open_utc": "2026-01-12T14:20:00+00:00",
+          "liquidity_level": 90318.3,
+          "liquidity_level_open_utc": "2026-01-12T10:00:00+00:00",
+          "liquidity_level_known_close_utc": "2026-01-12T13:00:00+00:00",
+          "liquidity_pool_members": 1,
+          "liquidity_known_close_utc": "2026-01-12T14:00:00+00:00",
+          "raid_extreme": 90080.1,
+          "raid_age_bars": 3,
+          "reaction_age_bars": 3,
+          "recovery_fraction": 0.3531813825576038,
+          "manipulation_origin": 92480.0,
+          "manipulation_span": 2399.899999999994,
+          "correction_origin_open_utc": "2026-01-12T03:00:00+00:00",
+          "target_known_close_utc": "2026-01-12T06:00:00+00:00",
+          "confirmation_model": "fvg_inversion",
+          "engulfed_open_utc": null,
+          "fvg_created_open_utc": "2026-01-12T13:05:00+00:00",
+          "fvg_known_close_utc": "2026-01-12T13:10:00+00:00",
+          "fvg_far_boundary": 90737.9,
+          "fvg_near_boundary": 90706.7,
+          "entry": 90868.05598666666,
+          "stop": 90062.08398000001,
+          "target": 92480.0,
+          "confirmed_close_utc": "2026-01-12T14:40:00+00:00"
+        }
+      },
+      "causal_checks": [
+        {
+          "check": "1d_closed_prefix",
+          "passed": true,
+          "evidence": {
+            "bars": 110,
+            "last_close": "2026-01-12T00:00:00+00:00"
+          }
+        },
+        {
+          "check": "1h_closed_prefix",
+          "passed": true,
+          "evidence": {
+            "bars": 110,
+            "last_close": "2026-01-12T14:00:00+00:00"
+          }
+        },
+        {
+          "check": "5m_closed_prefix",
+          "passed": true,
+          "evidence": {
+            "bars": 990,
+            "last_close": "2026-01-12T14:40:00+00:00"
+          }
+        },
+        {
+          "check": "exact_confirmation_close",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "preknown_liquidity_close",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "preknown_liquidity_level",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "preknown_structural_target",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "raid_and_extreme_known",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "whole_known_raid_extreme",
+          "passed": true,
+          "evidence": 90080.1
+        },
+        {
+          "check": "stop_beyond_whole_extreme",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "structural_target_unhit_since_raid",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "whole_recovery_denominator",
+          "passed": true,
+          "evidence": {
+            "recovered": 847.5999999999913,
+            "whole_span": 2399.899999999994,
+            "fraction": 0.3531813825576038
+          }
+        },
+        {
+          "check": "at_least_one_third",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "direct_monotone_recovery",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "source_or_confirmation",
+          "passed": true,
+          "evidence": "fvg_inversion"
+        },
+        {
+          "check": "reaction_wait_not_restarted",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "stable_first_raid_identity",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "fixed_structural_2r",
+          "passed": true,
+          "evidence": 2.000000000000054
+        },
+        {
+          "check": "retest_on_available_side",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "declared_session",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "v1_numeric_context_trend",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "v1_existential_daily_origin",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "h1_direction_agrees",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "daily_destination_preknown",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "complete_raid_prefix",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "fvg_created_before_extreme",
+          "passed": true,
+          "evidence": null
+        }
+      ],
+      "source_interpretation_limits": [
+        "D1/H1 trend is the frozen two-strict-pivot numeric proxy, not the author's manual chart classification.",
+        "V1 intraday origin is an existential historical daily sweep/reclaim; this provider exposes no unique latest A linked to B.",
+        "Whole-manipulation denominator uses the preknown structural TP as a correction-origin proxy.",
+        "Strictly monotone recovery closes, exact equality clusters and width2 confirmations are engineering formulas.",
+        "Wait12 is fixed engineering timing; no mandatory wait12 appears in the source. Pending order TTL is separate.",
+        "Fixed UTC+3 session windows and their ending times remain disclosed assumptions; London is allowed, NY preferred.",
+        "Scalp H1/M5/M1 is an explicit transfer of the new intraday confirmation, not a separately stated new-video checklist.",
+        "No exact author A, calendar entry, prices or venue match is established by these charts."
+      ],
+      "recorded_entry_time": "2026-01-12T14:40:00+00:00",
+      "admitted_geometry": {
+        "entry": 90868.0,
+        "stop": 90062.0,
+        "target": 92480.0,
+        "notional": 481.6004,
+        "leverage": 50.0,
+        "cash_risk_budget_usdt": 5.0,
+        "margin_reserved_usdt": 9.632007999999999
+      },
+      "image": "C:\\Users\\Lenovo\\Documents\\Codex\\2026-10-05\\new-chat\\outputs\\strategy_v5_cases\\mexc_v5equal_BTC_USDT_intraday_20260112_1440.png",
+      "image_sha256": "69fa295679d0f864c306a1c37b16a862f628251dfcc39adfa81434244dff85b9",
+      "completed_train_mode_source": {
+        "path": "C:\\Users\\Lenovo\\Documents\\Codex\\2026-10-05\\new-chat\\outputs\\research_mexc_v5\\train_results.json",
+        "sha256": "a76ad3a252b2057e2a02c8751ba4e2e12ff14952b395a6a964bc06952ac188b4",
+        "entire_train_stage_completed": true
+      }
+    },
+    {
+      "venue": "binance_usdm",
+      "mode": "scalp",
+      "symbol": "ETH_USDT",
+      "signal_time": "2024-11-21T14:44:00+00:00",
+      "selection": "first_chronological_filled_closed_record",
+      "candidate": "v5-equal-cost",
+      "phase": "train",
+      "cost_variant": "baseline",
+      "forward_price_or_pnl_fields_used": false,
+      "post_signal_fill_metadata_used_for_selection": true,
+      "outcome_bars_displayed": false,
+      "author_chart_exact_match": false,
+      "plan_sha256": "f3cee929e597e6d97e37b4ddba31b5c57d36d38aa1a265f302e7988c561efcb3",
+      "data_manifest_sha256": "fe7fb15769c8089ecea7a92ec3bc462f77fc02d9242d1f4207baae24946d960b",
+      "source_data_sha256": {
+        "ETH_USDT_1h.csv": "b611b80067f548950b70ce199b3dcbba98aa42692b05995b778c1014e3c42fe7",
+        "ETH_USDT_5m.csv": "75f70cb0219d90a99141a8212f7dea605fb4df9aa401f16f341388f95e03f1f2",
+        "ETH_USDT_1m.csv": "89f5b36265c0bfbe86cb7d4deba821cb3116ad7941585357b7bb16a30613d879"
+      },
+      "source_review": {
+        "path": "C:\\Users\\Lenovo\\Documents\\Codex\\2026-10-05\\new-chat\\work\\bingx_futures_scalping_bot\\docs\\strategy_v5.md",
+        "sha256": "66b5476f404fd325e62add4aee9c9c3061712c4c5d2efe3c51ff574a5616e709"
+      },
+      "provider_sha256": "511c6ebc592c2649ebd97e2b9f80c048bd180faad6ffa02fe5ffaa0bc2dfaacb",
+      "parameters": {
+        "liquidity_mode": "equal_clusters",
+        "recovery_fraction": 0.3333333333333333,
+        "max_wait_bars": 12
+      },
+      "history_bars": {
+        "1h": 110,
+        "5m": 110,
+        "1m": 430
+      },
+      "diagnostic": {
+        "accepted": true,
+        "setup": {
+          "id": "5a8062135ae814ebde83",
+          "timestamp": "2024-11-21T14:44:00Z",
+          "symbol": "ETH_USDT",
+          "direction": "LONG",
+          "setup_type": "VOLIUM_SCALP",
+          "htf_bias": "BULLISH",
+          "entry": 3329.486613333333,
+          "stop_loss": 3306.7699199999997,
+          "take_profits": [
+            3374.92
+          ],
+          "risk_reward": 2.0,
+          "confidence": "MEDIUM",
+          "confluences": [
+            "Experimental v5; declared causal interpretation",
+            "frozen v1 numeric context",
+            "Declared M1 transfer of the entry rule",
+            "5m equal_clusters liquidity raid",
+            "fvg_inversion",
+            "Whole-correction recovery 0.3688",
+            "Full known raid extreme stop; structural target; fixed 2R retest"
+          ],
+          "status": "ACTIVE",
+          "position_size_usdt": null
+        },
+        "reason": "accepted",
+        "features": {
+          "version": "experimental_v5",
+          "mode": "scalp",
+          "parameters": {
+            "liquidity_mode": "equal_clusters",
+            "recovery_fraction": 0.3333333333333333,
+            "max_wait_bars": 12
+          },
+          "direction": "LONG",
+          "context_method": "frozen v1 numeric context",
+          "raid_start_open_utc": "2024-11-21T14:35:00+00:00",
+          "sweep_open_utc": "2024-11-21T14:40:00+00:00",
+          "liquidity_level": 3330.81,
+          "liquidity_level_open_utc": "2024-11-21T13:30:00+00:00",
+          "liquidity_level_known_close_utc": "2024-11-21T13:45:00+00:00",
+          "liquidity_pool_members": 1,
+          "liquidity_known_close_utc": "2024-11-21T14:35:00+00:00",
+          "raid_extreme": 3310.08,
+          "raid_age_bars": 8,
+          "reaction_age_bars": 8,
+          "recovery_fraction": 0.36875385564466073,
+          "manipulation_origin": 3374.92,
+          "manipulation_span": 64.84000000000015,
+          "correction_origin_open_utc": "2024-11-21T14:10:00+00:00",
+          "target_known_close_utc": "2024-11-21T14:25:00+00:00",
+          "confirmation_model": "fvg_inversion",
+          "engulfed_open_utc": null,
+          "fvg_created_open_utc": "2024-11-21T14:40:00+00:00",
+          "fvg_known_close_utc": "2024-11-21T14:41:00+00:00",
+          "fvg_far_boundary": 3325.81,
+          "fvg_near_boundary": 3323.0,
+          "entry": 3329.486613333333,
+          "stop": 3306.7699199999997,
+          "target": 3374.92,
+          "confirmed_close_utc": "2024-11-21T14:44:00+00:00"
+        }
+      },
+      "causal_checks": [
+        {
+          "check": "1h_closed_prefix",
+          "passed": true,
+          "evidence": {
+            "bars": 110,
+            "last_close": "2024-11-21T14:00:00+00:00"
+          }
+        },
+        {
+          "check": "5m_closed_prefix",
+          "passed": true,
+          "evidence": {
+            "bars": 110,
+            "last_close": "2024-11-21T14:40:00+00:00"
+          }
+        },
+        {
+          "check": "1m_closed_prefix",
+          "passed": true,
+          "evidence": {
+            "bars": 430,
+            "last_close": "2024-11-21T14:44:00+00:00"
+          }
+        },
+        {
+          "check": "exact_confirmation_close",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "preknown_liquidity_close",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "preknown_liquidity_level",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "preknown_structural_target",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "raid_and_extreme_known",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "whole_known_raid_extreme",
+          "passed": true,
+          "evidence": 3310.08
+        },
+        {
+          "check": "stop_beyond_whole_extreme",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "structural_target_unhit_since_raid",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "whole_recovery_denominator",
+          "passed": true,
+          "evidence": {
+            "recovered": 23.909999999999854,
+            "whole_span": 64.84000000000015,
+            "fraction": 0.36875385564466073
+          }
+        },
+        {
+          "check": "at_least_one_third",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "direct_monotone_recovery",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "source_or_confirmation",
+          "passed": true,
+          "evidence": "fvg_inversion"
+        },
+        {
+          "check": "reaction_wait_not_restarted",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "stable_first_raid_identity",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "fixed_structural_2r",
+          "passed": true,
+          "evidence": 2.00000000000002
+        },
+        {
+          "check": "retest_on_available_side",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "declared_session",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "v1_numeric_context_trend",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "v1_active_hourly_context",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "complete_raid_prefix",
+          "passed": true,
+          "evidence": null
+        },
+        {
+          "check": "fvg_created_before_extreme",
+          "passed": true,
+          "evidence": null
+        }
+      ],
+      "source_interpretation_limits": [
+        "D1/H1 trend is the frozen two-strict-pivot numeric proxy, not the author's manual chart classification.",
+        "V1 intraday origin is an existential historical daily sweep/reclaim; this provider exposes no unique latest A linked to B.",
+        "Whole-manipulation denominator uses the preknown structural TP as a correction-origin proxy.",
+        "Strictly monotone recovery closes, exact equality clusters and width2 confirmations are engineering formulas.",
+        "Wait12 is fixed engineering timing; no mandatory wait12 appears in the source. Pending order TTL is separate.",
+        "Fixed UTC+3 session windows and their ending times remain disclosed assumptions; London is allowed, NY preferred.",
+        "Scalp H1/M5/M1 is an explicit transfer of the new intraday confirmation, not a separately stated new-video checklist.",
+        "No exact author A, calendar entry, prices or venue match is established by these charts."
+      ],
+      "recorded_entry_time": "2024-11-21T15:02:00+00:00",
+      "admitted_geometry": {
+        "entry": 3329.486613333333,
+        "stop": 3306.7699199999997,
+        "target": 3374.92,
+        "notional": 607.3538096273976,
+        "leverage": 25.0,
+        "cash_risk_budget_usdt": 5.0,
+        "margin_reserved_usdt": 24.294152385095902
+      },
+      "image": "C:\\Users\\Lenovo\\Documents\\Codex\\2026-10-05\\new-chat\\outputs\\strategy_v5_cases\\binance_usdm_v5equal_ETH_USDT_scalp_20241121_1444.png",
+      "image_sha256": "f88629f2608fd0255408d20333b27565bfbb13b79f1ee00041e04ee374773026",
+      "completed_train_mode_source": {
+        "path": "C:\\Users\\Lenovo\\Documents\\Codex\\2026-10-05\\new-chat\\outputs\\research_binance_v5\\train_results.json",
+        "sha256": "a24e506bb72a50c297ca396f8d5f204e9c2ba6bfe60b3a192715d62f296e3c6c",
+        "entire_train_stage_completed": true
+      }
+    }
+  ],
+  "limitations": [
+    "Filled-case selection conditions on the already closed trade-record pool and post-signal fill metadata; this retrospective source illustration is not an unbiased prospective sample.",
+    "D1/H1 trend is the frozen two-strict-pivot numeric proxy, not the author's manual chart classification.",
+    "V1 intraday origin is an existential historical daily sweep/reclaim; this provider exposes no unique latest A linked to B.",
+    "Whole-manipulation denominator uses the preknown structural TP as a correction-origin proxy.",
+    "Strictly monotone recovery closes, exact equality clusters and width2 confirmations are engineering formulas.",
+    "Wait12 is fixed engineering timing; no mandatory wait12 appears in the source. Pending order TTL is separate.",
+    "Fixed UTC+3 session windows and their ending times remain disclosed assumptions; London is allowed, NY preferred.",
+    "Scalp H1/M5/M1 is an explicit transfer of the new intraday confirmation, not a separately stated new-video checklist.",
+    "No exact author A, calendar entry, prices or venue match is established by these charts."
+  ],
+  "selection_conditions_on_closed_record_pool": true,
+  "unbiased_prospective_sample": false,
+  "selection_limitation": "Filled-case selection conditions on the already closed trade-record pool and post-signal fill metadata; this retrospective source illustration is not an unbiased prospective sample.",
+  "selection_disclosure_revised_at_utc": "2026-10-05T00:41:57.330092+00:00"
+}

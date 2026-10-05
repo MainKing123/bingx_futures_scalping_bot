@@ -1,0 +1,520 @@
+{
+  "generated_at_utc": "2026-10-04T17:29:22.600399+00:00",
+  "prior_v1_suite_trials": 255,
+  "prior_v1_shared_portfolio_trials_separate": 2,
+  "research_stage_trials": 380,
+  "total_suite_and_research_trials": 635,
+  "overlapping_trials_are_not_independent_samples": true,
+  "experiments": [
+    {
+      "directory": "research_mexc",
+      "plan_sha256": "b7d71e8e9bc990a06cb81f610a37ee0db57ecd1e40880ad2ae6d038b427f5b39",
+      "venue": "mexc",
+      "execution_resolution": "5m",
+      "folds": {
+        "train": {
+          "start_utc": "2025-11-08T15:25:00+00:00",
+          "end_utc": "2026-02-06T15:20:00+00:00",
+          "execution_bars": 25919
+        },
+        "validation": {
+          "start_utc": "2026-02-06T15:20:00+00:00",
+          "end_utc": "2026-03-08T15:15:00+00:00",
+          "execution_bars": 8639
+        },
+        "test": {
+          "start_utc": "2026-03-08T15:15:00+00:00",
+          "end_utc": "2026-04-07T15:20:00+00:00",
+          "execution_bars": 8641
+        }
+      },
+      "markets": [
+        {
+          "name": "crypto_core",
+          "symbols": [
+            "BTC_USDT",
+            "ETH_USDT"
+          ],
+          "baseline_costs_bps_per_side": [
+            5,
+            2
+          ],
+          "stress_costs_bps_per_side": [
+            10,
+            5
+          ]
+        },
+        {
+          "name": "five_fx",
+          "symbols": [
+            "BTC_USDT",
+            "ETH_USDT",
+            "EUR_USDT",
+            "GBP_USDT",
+            "JPY_USDT"
+          ],
+          "baseline_costs_bps_per_side": [
+            5.0,
+            6.0
+          ],
+          "stress_costs_bps_per_side": [
+            10.0,
+            10.0
+          ]
+        }
+      ],
+      "stage_counts": {
+        "train": 62,
+        "validation": 2,
+        "final": 0
+      },
+      "stage_files": {
+        "train": {
+          "sha256": "3c87ae4a329f991a9d4edcb21912e417fc5afb0cf2f1b497977aff5dc11a5d9b",
+          "trials": 62,
+          "completed_at_utc": "2026-10-04T16:27:22.780591+00:00"
+        },
+        "validation": {
+          "sha256": "f9df475c04b42a22d4eec724fd41aef49c0f8144b754c161738492d38b7ac201",
+          "trials": 2,
+          "completed_at_utc": "2026-10-04T16:27:33.464020+00:00"
+        },
+        "final": {
+          "sha256": "5187ac93dd2b3bdfa34b97cdbe2c1936e4949d29dab830142b9f295c5e7ebf8b",
+          "trials": 0,
+          "completed_at_utc": "2026-10-04T16:27:53.151496+00:00"
+        }
+      },
+      "verdicts": {
+        "crypto_core/intraday": {
+          "status": "no_validated_candidate",
+          "positive_historical_candidate": false,
+          "final_test_opened_for_group": false
+        },
+        "five_fx/intraday": {
+          "status": "no_validated_candidate",
+          "positive_historical_candidate": false,
+          "final_test_opened_for_group": false
+        }
+      },
+      "final_opened": false,
+      "reuses_parent_train_and_validation": false
+    },
+    {
+      "directory": "research_binance",
+      "plan_sha256": "f245804046c17b6f1cd830f5e9569843c1469fdd6a0fdd685fd09b18751267e3",
+      "venue": "binance_usdm",
+      "execution_resolution": "1m",
+      "folds": {
+        "train": {
+          "start_utc": "2024-01-01T00:00:00+00:00",
+          "end_utc": "2025-01-01T00:00:00+00:00",
+          "execution_bars": 527040
+        },
+        "validation": {
+          "start_utc": "2025-01-01T00:00:00+00:00",
+          "end_utc": "2025-07-01T00:00:00+00:00",
+          "execution_bars": 260640
+        },
+        "test": {
+          "start_utc": "2025-07-01T00:00:00+00:00",
+          "end_utc": "2026-01-01T00:00:00+00:00",
+          "execution_bars": 264960
+        }
+      },
+      "markets": [
+        {
+          "name": "crypto_core",
+          "symbols": [
+            "BTC_USDT",
+            "ETH_USDT"
+          ],
+          "baseline_costs_bps_per_side": [
+            5,
+            2
+          ],
+          "stress_costs_bps_per_side": [
+            10,
+            5
+          ]
+        }
+      ],
+      "stage_counts": {
+        "train": 62,
+        "validation": 2,
+        "final": 0
+      },
+      "stage_files": {
+        "train": {
+          "sha256": "bf5abec84aa1faf0e0f3b13f562d1c46f5f78dba0ae389af47ddd962fffd4c26",
+          "trials": 62,
+          "completed_at_utc": "2026-10-04T16:38:28.220282+00:00"
+        },
+        "validation": {
+          "sha256": "56221bea627fe775dce0387766daca4ae7e112702b2e3a1d63a6d09ec207d120",
+          "trials": 2,
+          "completed_at_utc": "2026-10-04T16:40:22.809496+00:00"
+        },
+        "final": {
+          "sha256": "9bd02d18827bfeb099720b519f4e12977d0a7d63183bdaa63433e5dbdf2b6d0b",
+          "trials": 0,
+          "completed_at_utc": "2026-10-04T16:40:42.766928+00:00"
+        }
+      },
+      "verdicts": {
+        "crypto_core/intraday": {
+          "status": "no_validated_candidate",
+          "positive_historical_candidate": false,
+          "final_test_opened_for_group": false
+        },
+        "crypto_core/scalp": {
+          "status": "no_validated_candidate",
+          "positive_historical_candidate": false,
+          "final_test_opened_for_group": false
+        }
+      },
+      "final_opened": false,
+      "reuses_parent_train_and_validation": false
+    },
+    {
+      "directory": "research_mexc_v3",
+      "plan_sha256": "3e4138227a5c31c99c5e4e56564d0d22627b0fa59f077b4f4e18421ff7743555",
+      "venue": "mexc",
+      "execution_resolution": "5m",
+      "folds": {
+        "train": {
+          "start_utc": "2025-11-08T15:25:00+00:00",
+          "end_utc": "2026-02-06T15:20:00+00:00",
+          "execution_bars": 25919
+        },
+        "validation": {
+          "start_utc": "2026-02-06T15:20:00+00:00",
+          "end_utc": "2026-03-08T15:15:00+00:00",
+          "execution_bars": 8639
+        },
+        "test": {
+          "start_utc": "2026-03-08T15:15:00+00:00",
+          "end_utc": "2026-04-07T15:20:00+00:00",
+          "execution_bars": 8641
+        }
+      },
+      "markets": [
+        {
+          "name": "crypto_core",
+          "symbols": [
+            "BTC_USDT",
+            "ETH_USDT"
+          ],
+          "baseline_costs_bps_per_side": [
+            5,
+            2
+          ],
+          "stress_costs_bps_per_side": [
+            10,
+            5
+          ]
+        },
+        {
+          "name": "five_fx",
+          "symbols": [
+            "BTC_USDT",
+            "ETH_USDT",
+            "EUR_USDT",
+            "GBP_USDT",
+            "JPY_USDT"
+          ],
+          "baseline_costs_bps_per_side": [
+            5.0,
+            6.0
+          ],
+          "stress_costs_bps_per_side": [
+            10.0,
+            10.0
+          ]
+        }
+      ],
+      "stage_counts": {
+        "train": 102,
+        "validation": 6,
+        "final": 0
+      },
+      "stage_files": {
+        "train": {
+          "sha256": "2d2fd1bd2bc7cc573705b0fab76725fad4539041d2137efcd699c07abf8b6ed1",
+          "trials": 102,
+          "completed_at_utc": "2026-10-04T16:56:43.026218+00:00"
+        },
+        "validation": {
+          "sha256": "c8c686b3aa8b5ff97e260ae3de1c3019ee7cbe5cc5a3523f8f70f307805c6056",
+          "trials": 6,
+          "completed_at_utc": "2026-10-04T16:57:01.314144+00:00"
+        },
+        "final": {
+          "sha256": "48aad3bfe8ded9ff897ba2cb8ad9111f5ed86413e7e41c7c9535a34e676946c6",
+          "trials": 0,
+          "completed_at_utc": "2026-10-04T16:57:08.616025+00:00"
+        }
+      },
+      "verdicts": {
+        "crypto_core/intraday": {
+          "status": "no_validated_candidate",
+          "positive_historical_candidate": false,
+          "final_test_opened_for_group": false
+        },
+        "five_fx/intraday": {
+          "status": "no_validated_candidate",
+          "positive_historical_candidate": false,
+          "final_test_opened_for_group": false
+        }
+      },
+      "final_opened": false,
+      "reuses_parent_train_and_validation": true
+    },
+    {
+      "directory": "research_binance_v3",
+      "plan_sha256": "83a887b8c0a7177166bfb5f9b62b32cb47c15815f13e3a97bf8e01d9292fa3f2",
+      "venue": "binance_usdm",
+      "execution_resolution": "1m",
+      "folds": {
+        "train": {
+          "start_utc": "2024-01-01T00:00:00+00:00",
+          "end_utc": "2025-01-01T00:00:00+00:00",
+          "execution_bars": 527040
+        },
+        "validation": {
+          "start_utc": "2025-01-01T00:00:00+00:00",
+          "end_utc": "2025-07-01T00:00:00+00:00",
+          "execution_bars": 260640
+        },
+        "test": {
+          "start_utc": "2025-07-01T00:00:00+00:00",
+          "end_utc": "2026-01-01T00:00:00+00:00",
+          "execution_bars": 264960
+        }
+      },
+      "markets": [
+        {
+          "name": "crypto_core",
+          "symbols": [
+            "BTC_USDT",
+            "ETH_USDT"
+          ],
+          "baseline_costs_bps_per_side": [
+            5,
+            2
+          ],
+          "stress_costs_bps_per_side": [
+            10,
+            5
+          ]
+        }
+      ],
+      "stage_counts": {
+        "train": 51,
+        "validation": 3,
+        "final": 0
+      },
+      "stage_files": {
+        "train": {
+          "sha256": "d6a8a8f731897ca123f81f6a95580267e31728f122d7cb03be9cec667e7ebdaf",
+          "trials": 51,
+          "completed_at_utc": "2026-10-04T17:03:13.902198+00:00"
+        },
+        "validation": {
+          "sha256": "00e1aa690a72177f2e35d31cd66a8da8d7c5fb04e52c4c07e5ca7e6a0d99ba30",
+          "trials": 3,
+          "completed_at_utc": "2026-10-04T17:06:35.597960+00:00"
+        },
+        "final": {
+          "sha256": "37481ea94f51b3e0d9ebc6c39eaaa5a32f2a4db67fc4f3b15fb509f6dbc3cd7b",
+          "trials": 0,
+          "completed_at_utc": "2026-10-04T17:06:47.809276+00:00"
+        }
+      },
+      "verdicts": {
+        "crypto_core/intraday": {
+          "status": "no_validated_candidate",
+          "positive_historical_candidate": false,
+          "final_test_opened_for_group": false
+        }
+      },
+      "final_opened": false,
+      "reuses_parent_train_and_validation": true
+    },
+    {
+      "directory": "research_mexc_v4",
+      "plan_sha256": "68035d5b5a3f5641a9759812a47a88444fba26f147101cfd930a61361e147a0e",
+      "venue": "mexc",
+      "execution_resolution": "5m",
+      "folds": {
+        "train": {
+          "start_utc": "2025-11-08T15:25:00+00:00",
+          "end_utc": "2026-02-06T15:20:00+00:00",
+          "execution_bars": 25919
+        },
+        "validation": {
+          "start_utc": "2026-02-06T15:20:00+00:00",
+          "end_utc": "2026-03-08T15:15:00+00:00",
+          "execution_bars": 8639
+        },
+        "test": {
+          "start_utc": "2026-03-08T15:15:00+00:00",
+          "end_utc": "2026-04-07T15:20:00+00:00",
+          "execution_bars": 8641
+        }
+      },
+      "markets": [
+        {
+          "name": "crypto_core",
+          "symbols": [
+            "BTC_USDT",
+            "ETH_USDT"
+          ],
+          "baseline_costs_bps_per_side": [
+            5,
+            2
+          ],
+          "stress_costs_bps_per_side": [
+            10,
+            5
+          ]
+        },
+        {
+          "name": "five_fx",
+          "symbols": [
+            "BTC_USDT",
+            "ETH_USDT",
+            "EUR_USDT",
+            "GBP_USDT",
+            "JPY_USDT"
+          ],
+          "baseline_costs_bps_per_side": [
+            5.0,
+            6.0
+          ],
+          "stress_costs_bps_per_side": [
+            10.0,
+            10.0
+          ]
+        }
+      ],
+      "stage_counts": {
+        "train": 54,
+        "validation": 6,
+        "final": 0
+      },
+      "stage_files": {
+        "train": {
+          "sha256": "e5b915d3f94e34a03e9097b71d551faafeac810f73aa3fff25c23fe7e03bb2ea",
+          "trials": 54,
+          "completed_at_utc": "2026-10-04T17:15:40.599230+00:00"
+        },
+        "validation": {
+          "sha256": "de008ece96f5b81784a1150473069d04fca5822ea378801de89d69a0f08340d8",
+          "trials": 6,
+          "completed_at_utc": "2026-10-04T17:16:11.547684+00:00"
+        },
+        "final": {
+          "sha256": "f984ec69ea17faea5b6f589bae33a4e0f3b85c3a8273102f1f07739d2a896122",
+          "trials": 0,
+          "completed_at_utc": "2026-10-04T17:16:25.318793+00:00"
+        }
+      },
+      "verdicts": {
+        "crypto_core/intraday": {
+          "status": "no_validated_candidate",
+          "positive_historical_candidate": false,
+          "final_test_opened_for_group": false
+        },
+        "five_fx/intraday": {
+          "status": "no_validated_candidate",
+          "positive_historical_candidate": false,
+          "final_test_opened_for_group": false
+        }
+      },
+      "final_opened": false,
+      "reuses_parent_train_and_validation": true
+    },
+    {
+      "directory": "research_binance_v4",
+      "plan_sha256": "24925e8b3408c68bd6e17887fc00b5688d1b626aad99bf8f385e64fec1eae80d",
+      "venue": "binance_usdm",
+      "execution_resolution": "1m",
+      "folds": {
+        "train": {
+          "start_utc": "2024-01-01T00:00:00+00:00",
+          "end_utc": "2025-01-01T00:00:00+00:00",
+          "execution_bars": 527040
+        },
+        "validation": {
+          "start_utc": "2025-01-01T00:00:00+00:00",
+          "end_utc": "2025-07-01T00:00:00+00:00",
+          "execution_bars": 260640
+        },
+        "test": {
+          "start_utc": "2025-07-01T00:00:00+00:00",
+          "end_utc": "2026-01-01T00:00:00+00:00",
+          "execution_bars": 264960
+        }
+      },
+      "markets": [
+        {
+          "name": "crypto_core",
+          "symbols": [
+            "BTC_USDT",
+            "ETH_USDT"
+          ],
+          "baseline_costs_bps_per_side": [
+            5,
+            2
+          ],
+          "stress_costs_bps_per_side": [
+            10,
+            5
+          ]
+        }
+      ],
+      "stage_counts": {
+        "train": 27,
+        "validation": 3,
+        "final": 0
+      },
+      "stage_files": {
+        "train": {
+          "sha256": "08e7c9b345bbae3d0fb14d72b270df1a143dcf8968ca192fd412160111a79209",
+          "trials": 27,
+          "completed_at_utc": "2026-10-04T17:20:05.403273+00:00"
+        },
+        "validation": {
+          "sha256": "c0fc2df4c626816e2c44953cba3443a7491b9f9835469ecf88c00bcafb836914",
+          "trials": 3,
+          "completed_at_utc": "2026-10-04T17:21:27.066331+00:00"
+        },
+        "final": {
+          "sha256": "c17d9f37ad8e2a85d4d5f3797b6f499f497e88e74e651b95414470173fa1cce2",
+          "trials": 0,
+          "completed_at_utc": "2026-10-04T17:21:39.421542+00:00"
+        }
+      },
+      "verdicts": {
+        "crypto_core/intraday": {
+          "status": "no_validated_candidate",
+          "positive_historical_candidate": false,
+          "final_test_opened_for_group": false
+        }
+      },
+      "final_opened": false,
+      "reuses_parent_train_and_validation": true
+    }
+  ],
+  "positive_mexc_historical_candidate": false,
+  "live_execution_enabled_by_research": false,
+  "source_case_reviews": {
+    "strategy_case_reviews.json": "195585ec5eebe2c3c5a23d77ae19f3b7678e43a77d1b897705e42521e33b3c20",
+    "strategy_v3_case_reviews.json": "2e47bb4a15399fda14ab3a987962a77e5925c7514abd71b57c541056d555eb7c",
+    "strategy_v4_case_reviews.json": "f09cd40f2af72c5dc0eb7526ac3202cc6a4f0443089699d55b426c41dd2b21a5",
+    "strategy_author_case_audit.json": "8005ca322aa395923c7658ddcea74b37243a5f54fbfcf0570cf9f130f4527cd8"
+  },
+  "known_author_example_validation_inspection_disclosed": true,
+  "numeric_criteria_not_disclosed_by_author": true
+}
