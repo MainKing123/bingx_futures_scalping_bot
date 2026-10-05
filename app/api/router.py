@@ -23,7 +23,7 @@ async def status(request: Request):
     return {"exchange":"MEXC", "mode":"live" if state.settings.auto_execution else "paper",
         "strategy":state.settings.volium_mode, "symbols":state.scanner.active_symbols,
         "strategy_profile":getattr(state.settings, "volium_strategy_profile", "v1_guarded"),
-        "strategy_is_experimental":getattr(state.settings, "volium_strategy_profile", "").startswith("v5"),
+        "strategy_is_experimental":getattr(state.settings, "volium_strategy_profile", "").startswith(("v5", "v6")),
         "universe_core_symbols":getattr(state.settings, "universe_core_symbols", []),
         "entries_paused":not state.risk_manager.can_open_setup() or bool(state.scanner.selection_error) or marked is None, "reserved_slots":state.risk_manager.open_setups,
         "equity_usdt":state.risk_manager.balance,

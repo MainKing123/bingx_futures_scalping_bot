@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from app.api.router import router
 from app.config import Settings
-from app.runtime_settings import RuntimeSettings
+from app.runtime_v6 import RuntimeV6Settings
 from app.db.migrations import init_db
 from app.exchange.client import MEXCClient
 from app.execution.executor import AutoExecutor
@@ -18,7 +18,7 @@ from app.universe import UniverseSelector
 
 
 def create_app(settings=None, client=None, *, start_background=True):
-    config = settings or RuntimeSettings()
+    config = settings or RuntimeV6Settings()
     if config.pair_selection == "fixed" and len(config.trading_symbols) != config.pair_count:
         raise ValueError("Fixed trading universe must contain exactly five distinct USDT pairs")
     @asynccontextmanager

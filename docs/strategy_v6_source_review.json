@@ -1,0 +1,302 @@
+{
+  "version": 6,
+  "created_at_utc": "2026-10-05T08:59:01.166101+00:00",
+  "historical_pnl_computed": false,
+  "author_exact_coordinates_available": false,
+  "manual_full_setup_fidelity_proven": false,
+  "expected_directions_declared_from_source_and_raw_context_before_profit": true,
+  "records": [
+    {
+      "id": "source_btc_2025_06_24",
+      "type": "known_source_context_calibration",
+      "note": "Dated public author context; known calibration, other venue, exact author entry unavailable",
+      "checks": {
+        "1d": {
+          "expected_context": "LONG",
+          "leg": {
+            "direction": "LONG",
+            "first_raid_open_utc": "2025-06-22T00:00:00+00:00",
+            "actual_extreme_open_utc": "2025-06-22T00:00:00+00:00",
+            "extreme": 98115.4,
+            "swept_level": 100305.1,
+            "swept_level_known_close_utc": "2025-06-08T00:00:00+00:00",
+            "reaction_close_utc": "2025-06-24T00:00:00+00:00",
+            "confirmation_model": "engulfment",
+            "target": 106486.2,
+            "target_known_close_utc": "2025-06-23T00:00:00+00:00",
+            "last_checked_close_utc": "2025-06-24T00:00:00+00:00"
+          },
+          "csv_sha256": "ccff1506efc8a7757d9b2df337f1ad532e13e6308c80e6c621df18c4f32f31bc",
+          "known_first": "2025-04-05T00:00:00+00:00",
+          "known_last": "2025-06-23T00:00:00+00:00"
+        },
+        "1h": {
+          "expected_context": "LONG",
+          "leg": {
+            "direction": "LONG",
+            "first_raid_open_utc": "2025-06-23T16:00:00+00:00",
+            "actual_extreme_open_utc": "2025-06-23T16:00:00+00:00",
+            "extreme": 99547.6,
+            "swept_level": 100749.8,
+            "swept_level_known_close_utc": "2025-06-23T16:00:00+00:00",
+            "reaction_close_utc": "2025-06-23T18:00:00+00:00",
+            "confirmation_model": "fvg_inversion",
+            "target": null,
+            "target_known_close_utc": null,
+            "last_checked_close_utc": "2025-06-24T08:00:00+00:00"
+          },
+          "csv_sha256": "5bec7087af0ef01b7f6cf8989278675d313e657bd8d48ae57816cb57c38a0a49",
+          "known_first": "2025-06-21T00:00:00+00:00",
+          "known_last": "2025-06-24T07:00:00+00:00"
+        }
+      },
+      "chart": "source_btc_2025_06_24.png"
+    },
+    {
+      "id": "old_v5_context_2026_01_12",
+      "type": "known_source_context_calibration",
+      "note": "Known old V5 trade; outcome was already observed, context must reject despite old profit",
+      "checks": {
+        "1d": {
+          "expected_context": "SHORT",
+          "leg": {
+            "direction": "SHORT",
+            "first_raid_open_utc": "2026-01-05T00:00:00+00:00",
+            "actual_extreme_open_utc": "2026-01-05T00:00:00+00:00",
+            "extreme": 94700.0,
+            "swept_level": 94555.9,
+            "swept_level_known_close_utc": "2025-12-12T00:00:00+00:00",
+            "reaction_close_utc": "2026-01-10T00:00:00+00:00",
+            "confirmation_model": "fvg_inversion",
+            "target": 86760.0,
+            "target_known_close_utc": "2026-01-01T00:00:00+00:00",
+            "last_checked_close_utc": "2026-01-12T00:00:00+00:00"
+          },
+          "csv_sha256": "3defea6d74255b31c641a27465ac51821b00b4f7f6c19ec54e2e5ed021fc23fc",
+          "known_first": "2025-10-24T00:00:00+00:00",
+          "known_last": "2026-01-11T00:00:00+00:00"
+        },
+        "1h": {
+          "expected_context": "LONG",
+          "leg": {
+            "direction": "LONG",
+            "first_raid_open_utc": "2026-01-11T23:00:00+00:00",
+            "actual_extreme_open_utc": "2026-01-11T23:00:00+00:00",
+            "extreme": 90180.7,
+            "swept_level": 90300.0,
+            "swept_level_known_close_utc": "2026-01-11T23:00:00+00:00",
+            "reaction_close_utc": "2026-01-12T00:00:00+00:00",
+            "confirmation_model": "engulfment",
+            "target": null,
+            "target_known_close_utc": null,
+            "last_checked_close_utc": "2026-01-12T14:00:00+00:00"
+          },
+          "csv_sha256": "78506e66c195e35aa2f715f5b924161318bfcecec64426f7619e973f231a442f",
+          "known_first": "2026-01-09T06:00:00+00:00",
+          "known_last": "2026-01-12T13:00:00+00:00"
+        }
+      },
+      "chart": "old_v5_context_2026_01_12.png"
+    },
+    {
+      "id": "synthetic_long",
+      "type": "synthetic_source_contract",
+      "diagnostic": {
+        "accepted": true,
+        "setup": {
+          "id": "cb3e6a07d811ed0140f1",
+          "timestamp": "2026-10-05T07:15:00Z",
+          "symbol": "BTC_USDT",
+          "direction": "LONG",
+          "setup_type": "VOLIUM_INTRADAY",
+          "htf_bias": "BULLISH",
+          "entry": 116.31873333333333,
+          "stop_loss": 109.4781,
+          "take_profits": [
+            130.0
+          ],
+          "risk_reward": 2.0,
+          "confidence": "MEDIUM",
+          "confluences": [
+            "Experimental v6; current liquidity-to-liquidity context",
+            "current confirmed A-to-B liquidity leg",
+            "D1/H1 current liquidity legs aligned",
+            "1h equal_clusters liquidity raid",
+            "engulfment_and_inversion",
+            "Whole-correction recovery 0.6818",
+            "Full known raid extreme stop; structural target; fixed 2R retest"
+          ],
+          "status": "ACTIVE",
+          "position_size_usdt": null
+        },
+        "reason": "accepted",
+        "features": {
+          "version": "experimental_v6",
+          "mode": "intraday",
+          "parameters": {
+            "liquidity_mode": "equal_clusters",
+            "recovery_fraction": 0.3333333333333333,
+            "max_wait_bars": 12
+          },
+          "direction": "LONG",
+          "context_method": "current confirmed A-to-B liquidity leg",
+          "daily_leg": {
+            "direction": "LONG",
+            "first_raid_open_utc": "2026-10-02T00:00:00+00:00",
+            "actual_extreme_open_utc": "2026-10-02T00:00:00+00:00",
+            "extreme": 94.0,
+            "swept_level": 98.0,
+            "swept_level_known_close_utc": "2026-09-28T00:00:00+00:00",
+            "reaction_close_utc": "2026-10-04T00:00:00+00:00",
+            "confirmation_model": "engulfment",
+            "target": 140.0,
+            "target_known_close_utc": "2026-10-01T00:00:00+00:00",
+            "last_checked_close_utc": "2026-10-05T00:00:00+00:00"
+          },
+          "hourly_leg": {
+            "direction": "LONG",
+            "first_raid_open_utc": "2026-10-04T21:00:00+00:00",
+            "actual_extreme_open_utc": "2026-10-04T21:00:00+00:00",
+            "extreme": 94.0,
+            "swept_level": 98.0,
+            "swept_level_known_close_utc": "2026-10-04T17:00:00+00:00",
+            "reaction_close_utc": "2026-10-04T23:00:00+00:00",
+            "confirmation_model": "engulfment",
+            "target": null,
+            "target_known_close_utc": null,
+            "last_checked_close_utc": "2026-10-05T07:00:00+00:00"
+          },
+          "raid_start_open_utc": "2026-10-05T07:05:00+00:00",
+          "sweep_open_utc": "2026-10-05T07:05:00+00:00",
+          "liquidity_level": 110.0,
+          "liquidity_level_open_utc": "2026-10-05T02:00:00+00:00",
+          "liquidity_level_known_close_utc": "2026-10-05T05:00:00+00:00",
+          "liquidity_pool_members": 1,
+          "liquidity_known_close_utc": "2026-10-05T07:00:00+00:00",
+          "raid_extreme": 109.5,
+          "raid_age_bars": 1,
+          "reaction_age_bars": 1,
+          "recovery_fraction": 0.6818181818181818,
+          "manipulation_origin": 120.5,
+          "manipulation_span": 11.0,
+          "manipulation_origin_open_utc": "2026-10-05T06:30:00+00:00",
+          "manipulation_origin_known_close_utc": "2026-10-05T06:45:00+00:00",
+          "correction_origin_open_utc": "2026-10-05T04:00:00+00:00",
+          "target_known_close_utc": "2026-10-05T07:00:00+00:00",
+          "confirmation_model": "engulfment_and_inversion",
+          "engulfed_open_utc": "2026-10-05T07:05:00+00:00",
+          "fvg_created_open_utc": "2026-10-05T07:05:00+00:00",
+          "fvg_known_close_utc": "2026-10-05T07:10:00+00:00",
+          "fvg_far_boundary": 116.0,
+          "fvg_near_boundary": 115.0,
+          "entry": 116.31873333333333,
+          "stop": 109.4781,
+          "target": 130.0,
+          "confirmed_close_utc": "2026-10-05T07:15:00+00:00"
+        }
+      },
+      "chart": "synthetic_long.png"
+    },
+    {
+      "id": "synthetic_short",
+      "type": "synthetic_source_contract",
+      "diagnostic": {
+        "accepted": true,
+        "setup": {
+          "id": "dc045283be0a1cf7f654",
+          "timestamp": "2026-10-05T07:15:00Z",
+          "symbol": "BTC_USDT",
+          "direction": "SHORT",
+          "setup_type": "VOLIUM_INTRADAY",
+          "htf_bias": "BEARISH",
+          "entry": 133.6854,
+          "stop_loss": 140.5281,
+          "take_profits": [
+            120.0
+          ],
+          "risk_reward": 2.0,
+          "confidence": "MEDIUM",
+          "confluences": [
+            "Experimental v6; current liquidity-to-liquidity context",
+            "current confirmed A-to-B liquidity leg",
+            "D1/H1 current liquidity legs aligned",
+            "1h equal_clusters liquidity raid",
+            "engulfment_and_inversion",
+            "Whole-correction recovery 0.6818",
+            "Full known raid extreme stop; structural target; fixed 2R retest"
+          ],
+          "status": "ACTIVE",
+          "position_size_usdt": null
+        },
+        "reason": "accepted",
+        "features": {
+          "version": "experimental_v6",
+          "mode": "intraday",
+          "parameters": {
+            "liquidity_mode": "equal_clusters",
+            "recovery_fraction": 0.3333333333333333,
+            "max_wait_bars": 12
+          },
+          "direction": "SHORT",
+          "context_method": "current confirmed A-to-B liquidity leg",
+          "daily_leg": {
+            "direction": "SHORT",
+            "first_raid_open_utc": "2026-10-02T00:00:00+00:00",
+            "actual_extreme_open_utc": "2026-10-02T00:00:00+00:00",
+            "extreme": 156.0,
+            "swept_level": 152.0,
+            "swept_level_known_close_utc": "2026-09-28T00:00:00+00:00",
+            "reaction_close_utc": "2026-10-04T00:00:00+00:00",
+            "confirmation_model": "engulfment",
+            "target": 110.0,
+            "target_known_close_utc": "2026-10-01T00:00:00+00:00",
+            "last_checked_close_utc": "2026-10-05T00:00:00+00:00"
+          },
+          "hourly_leg": {
+            "direction": "SHORT",
+            "first_raid_open_utc": "2026-10-04T21:00:00+00:00",
+            "actual_extreme_open_utc": "2026-10-04T21:00:00+00:00",
+            "extreme": 156.0,
+            "swept_level": 152.0,
+            "swept_level_known_close_utc": "2026-10-04T17:00:00+00:00",
+            "reaction_close_utc": "2026-10-04T23:00:00+00:00",
+            "confirmation_model": "engulfment",
+            "target": null,
+            "target_known_close_utc": null,
+            "last_checked_close_utc": "2026-10-05T07:00:00+00:00"
+          },
+          "raid_start_open_utc": "2026-10-05T07:05:00+00:00",
+          "sweep_open_utc": "2026-10-05T07:05:00+00:00",
+          "liquidity_level": 140.0,
+          "liquidity_level_open_utc": "2026-10-05T02:00:00+00:00",
+          "liquidity_level_known_close_utc": "2026-10-05T05:00:00+00:00",
+          "liquidity_pool_members": 1,
+          "liquidity_known_close_utc": "2026-10-05T07:00:00+00:00",
+          "raid_extreme": 140.5,
+          "raid_age_bars": 1,
+          "reaction_age_bars": 1,
+          "recovery_fraction": 0.6818181818181818,
+          "manipulation_origin": 129.5,
+          "manipulation_span": 11.0,
+          "manipulation_origin_open_utc": "2026-10-05T06:30:00+00:00",
+          "manipulation_origin_known_close_utc": "2026-10-05T06:45:00+00:00",
+          "correction_origin_open_utc": "2026-10-05T04:00:00+00:00",
+          "target_known_close_utc": "2026-10-05T07:00:00+00:00",
+          "confirmation_model": "engulfment_and_inversion",
+          "engulfed_open_utc": "2026-10-05T07:05:00+00:00",
+          "fvg_created_open_utc": "2026-10-05T07:05:00+00:00",
+          "fvg_known_close_utc": "2026-10-05T07:10:00+00:00",
+          "fvg_far_boundary": 134.0,
+          "fvg_near_boundary": 135.0,
+          "entry": 133.6854,
+          "stop": 140.5281,
+          "target": 120.0,
+          "confirmed_close_utc": "2026-10-05T07:15:00+00:00"
+        }
+      },
+      "chart": "synthetic_short.png"
+    }
+  ],
+  "regression_contract_count": 28,
+  "scope": "two known real context calibrations, two synthetic full setups; no unbiased author-labelled accuracy score"
+}

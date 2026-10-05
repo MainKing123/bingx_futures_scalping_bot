@@ -189,7 +189,7 @@ class SignalScanner:
                 limit = self.settings.volium_context_lookback + 30
                 profile = getattr(self.settings, "volium_strategy_profile", "v1_guarded")
                 entry_limit = limit
-                if profile.startswith("v5"):
+                if profile.startswith(("v5", "v6")):
                     # Match the preregistered replay prefix: it must include the
                     # liquidity-bar boundary and the correction's FVG history.
                     # One extra bar allows for the currently forming candle,
@@ -211,7 +211,10 @@ class SignalScanner:
                     return
                 frames = dict(zip(context_timeframes, context_frames))
                 frames[entry_timeframe] = entry_frame
-                if profile.startswith("v5"):
+                if profile == "v6_current_leg":
+                    from app.strategy.volium_v6 import analyze_volium_v6_from_df
+                    setup = analyze_volium_v6_from_df(symbol=symbol, frames=frames, settings=self.settings, mode=mode, now=now)
+                elif profile.startswith("v5"):
                     from app.strategy.volium_v5 import V5Parameters, analyze_volium_v5_from_df
                     setup = analyze_volium_v5_from_df(symbol=symbol, frames=frames, settings=self.settings, mode=mode, now=now,
                         parameters=V5Parameters(liquidity_mode="equal_clusters" if profile == "v5_equal" else "strict"))

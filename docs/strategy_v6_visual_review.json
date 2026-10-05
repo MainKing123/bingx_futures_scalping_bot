@@ -1,0 +1,27 @@
+{
+  "reviewed_at_utc": "2026-10-05T09:02:11.624278+00:00",
+  "method": "Root visual inspection of four PNGs via view_image before V6 financial outcomes",
+  "author_full_setup_fidelity_proven": false,
+  "records": [
+    {
+      "chart": "source_btc_2025_06_24.png",
+      "sha256": "b6935ad7bc68854ef6d9693b66e6a485f1e2c42fe2c8f5d2c746e931a3bfd51d",
+      "finding": "Visual prefix review: June22 wick below prior100305 pool, June23 reaction; daily B106486 untouched at cutoff. H1 latest raid June23 16h protected99547.6 and ensuing upward FVG flow. Supports LONG context, does not validate exact author entry."
+    },
+    {
+      "chart": "old_v5_context_2026_01_12.png",
+      "sha256": "3ee9e40b324f14ca83f22302467d3266e5b08d5081c0af0cb1a1d7ffad422bc9",
+      "finding": "Visual prefix review: daily January5 high94700 exceeds94555.9, later bearish displacement leaves B86760; H1 latest January11 23h low90180.7 raids90300 then rises. Directions opposed: reject. Known old winner deliberately not preserved."
+    },
+    {
+      "chart": "synthetic_long.png",
+      "sha256": "7a364fa2c30a0c39ac241f8a5c03911c2d85a64c4f28cce0353868aed7c2c5e1",
+      "finding": "Visual contract review: M5 preknown peak120.5 distinct from H1TP130, firstraid then full109.5 extreme and direct engulfment117. Retest116.319/SL109.478 fixed2R. Synthetic independent TF fixtures test predicates, not aggregation/market accuracy."
+    },
+    {
+      "chart": "synthetic_short.png",
+      "sha256": "87ab722a108c2892d0fea840d7945b8939f228aa1866bfb4d7345e3d5d6207c7",
+      "finding": "Visual mirrored contract review: origin129.5 distinct from H1TP120, full140.5 extreme then direct bearish engulfment133. Retest133.685/SL140.528 fixed2R. Synthetic only."
+    }
+  ]
+}
