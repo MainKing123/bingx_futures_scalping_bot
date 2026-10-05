@@ -64,6 +64,7 @@ class UniverseSelector:
                 "large_cap_top_n": self.settings.large_cap_top_n,
                 "min_pair_volume_usd": self.settings.min_pair_volume_usd,
                 "lookback": LOOKBACK, "interval": INTERVAL,
+                "core_symbols": list(getattr(self.settings, "universe_core_symbols", [])),
                 "fixed_symbols": list(self.settings.trading_symbols) if self.settings.pair_selection == "fixed" else []}
 
     @staticmethod
@@ -261,7 +262,16 @@ class UniverseSelector:
             except Exception:
                 raise UniverseSelectionError("Complete fresh volatility ranking unavailable; selection paused") from None
             ranked.sort(key=lambda row: (-row["natr_percent"], row["market_cap_rank"] or 0, row["symbol"]))
-            selected = ranked[:5] if mode == "dynamic" else sorted(ranked, key=lambda row: fixed.index(row["symbol"]))
+            if mode == "dynamic":
+                core = list(getattr(self.settings, "universe_core_symbols", []))
+                by_symbol = {row["symbol"]:row for row in ranked}
+                if any(symbol not in by_symbol for symbol in core):
+                    raise UniverseSelectionError("Required core pairs failed liquidity/capitalization eligibility")
+                selected = [by_symbol[symbol] for symbol in core]
+                selected.extend(row for row in ranked if row["symbol"] not in core)
+                selected = selected[:5]
+            else:
+                selected = sorted(ranked, key=lambda row: fixed.index(row["symbol"]))
             snapshot = {"version": 1, "source": MARKET_CAP_URL if mode == "dynamic" else "explicit_fixed_configuration",
                         "selected_at": now.isoformat(), "market_cap_fetched_at": cap_timestamp,
                         "market_cap_source": cap_source, "market_cap_snapshot": cap_rows,

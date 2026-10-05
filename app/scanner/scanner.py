@@ -16,6 +16,7 @@ from app.exchange.client import MEXCClient
 from app.risk.risk_manager import RiskManager
 from app.schemas.setup import TradeSetup
 from app.strategy.volium import analyze_volium_from_df
+from app.execution.economics import prepare_runtime_setup, current_contract_with_basis
 
 
 class SignalScanner:
@@ -37,6 +38,7 @@ class SignalScanner:
         self.last_processed: dict[tuple[str, str], datetime] = {}
         self.last_scan_at: datetime | None = None
         self.last_errors: dict[str, str] = {}
+        self.last_rejections: dict[str, str] = {}
         self.latest_signals: dict[str, TradeSetup | None] = {}
         self._publish_lock = asyncio.Lock()
         self._scan_lock = asyncio.Lock()
@@ -68,6 +70,8 @@ class SignalScanner:
             if self.settings.auto_execution and self.executor is None:
                 logger.error("Automatic execution requires an executor")
                 return False
+            guarded = getattr(self.settings, "execution_cost_guard_enabled", False)
+            contract = await current_contract_with_basis(self.client, setup.symbol) if guarded else None
             async with SessionLocal() as session:
                 if await session.get(SetupRecord, setup.id) is not None:
                     return False
@@ -87,23 +91,55 @@ class SignalScanner:
                         SetupRecord.status == "ACTIVE", SetupRecord.execution_mode == "paper"
                     ))).all()
                     reserved_notional = 0.0
+                    reserved_margin = 0.0
                     for row in rows:
-                        amount = TradeSetup.model_validate_json(row.payload).position_size_usdt
+                        from app.db.repository import record_to_setup
+                        restored = record_to_setup(row)
+                        amount = restored.position_size_usdt
                         if amount is None or not math.isfinite(amount) or amount <= 0:
                             self.risk_manager.halted = True
                             raise ValueError("An active paper reservation has no valid position size")
                         reserved_notional += amount
+                        margin = getattr(restored, "economics", {}).get(
+                            "reserved_margin_usdt", amount / getattr(restored, "leverage", 1))
+                        if not isinstance(margin, (int, float)) or not math.isfinite(margin) or margin <= 0:
+                            self.risk_manager.halted = True
+                            raise ValueError("An active paper reservation has no valid margin")
+                        reserved_margin += margin
                     balance = self.risk_manager.balance
                     leverage = self.settings.default_leverage
-                    available_margin = max(balance * 0.9 - reserved_notional / leverage, 0.0)
-                    risk_size = self.risk_manager.calculate_position_size(
-                        setup.entry, setup.stop_loss, self.settings.risk_per_trade_percent, balance
-                    )
-                    size = min(risk_size, available_margin * leverage)
-                    if not math.isfinite(size) or size <= 0:
-                        logger.info(f"No paper margin available for {setup.symbol}")
+                    if guarded:
+                        # Marked losses cannot be spent again by another paper idea.
+                        marked = getattr(self.tracker, "marked_equity", balance)
+                        if not isinstance(marked, (int, float)) or not math.isfinite(marked):
+                            self.risk_manager.halted = True
+                            raise ValueError("Paper marked equity is unavailable")
+                        try:
+                            setup = prepare_runtime_setup(setup, self.settings, contract, balance,
+                                                          max(min(balance, marked) * .9 - reserved_margin, 0.0))
+                        except ValueError as exc:
+                            self.last_rejections[setup.symbol] = str(exc)
+                            return False
+                    else:
+                        available_margin = max(balance * 0.9 - reserved_notional / leverage, 0.0)
+                        risk_size = self.risk_manager.calculate_position_size(
+                            setup.entry, setup.stop_loss, self.settings.risk_per_trade_percent, balance
+                        )
+                        size = min(risk_size, available_margin * leverage)
+                        if not math.isfinite(size) or size <= 0:
+                            logger.info(f"No paper margin available for {setup.symbol}")
+                            return False
+                        setup.position_size_usdt = size
+                elif guarded:
+                    try:
+                        setup = prepare_runtime_setup(setup, self.settings, contract, self.risk_manager.balance,
+                                                      self.risk_manager.balance * .9)
+                    except ValueError as exc:
+                        self.last_rejections[setup.symbol] = str(exc)
                         return False
-                    setup.position_size_usdt = size
+
+                if guarded:
+                    setup.strategy_version = getattr(self.settings, "volium_strategy_profile", "v1_guarded")
 
             self.risk_manager.open_setups += 1
             saved = False
@@ -130,6 +166,9 @@ class SignalScanner:
                     await self.tracker.add(setup)
                 raise
 
+            self.latest_signals[setup.symbol] = setup
+            self.last_rejections.pop(setup.symbol, None)
+
         if self.ws_manager is not None:
             try:
                 await self.ws_manager.broadcast("new_setup", setup.model_dump())
@@ -144,7 +183,13 @@ class SignalScanner:
                 timeframes = self._timeframes(mode)
                 entry_timeframe = timeframes[-1]
                 limit = self.settings.volium_context_lookback + 30
-                entry_frame = await self.client.get_klines(symbol, entry_timeframe, limit=limit)
+                profile = getattr(self.settings, "volium_strategy_profile", "v1_guarded")
+                entry_limit = limit
+                if profile.startswith("v5"):
+                    # Match the preregistered replay prefix: it must include the
+                    # liquidity-bar boundary and the correction's FVG history.
+                    entry_limit = self.settings.volium_context_lookback * (12 if mode == "intraday" else 5) + 30
+                entry_frame = await self.client.get_klines(symbol, entry_timeframe, limit=entry_limit)
                 if entry_frame.empty:
                     return
                 timestamp = self._latest_timestamp(entry_frame)
@@ -160,7 +205,12 @@ class SignalScanner:
                     return
                 frames = dict(zip(context_timeframes, context_frames))
                 frames[entry_timeframe] = entry_frame
-                setup = analyze_volium_from_df(symbol=symbol, frames=frames, settings=self.settings, mode=mode, now=now)
+                if profile.startswith("v5"):
+                    from app.strategy.volium_v5 import V5Parameters, analyze_volium_v5_from_df
+                    setup = analyze_volium_v5_from_df(symbol=symbol, frames=frames, settings=self.settings, mode=mode, now=now,
+                        parameters=V5Parameters(liquidity_mode="equal_clusters" if profile == "v5_equal" else "strict"))
+                else:
+                    setup = analyze_volium_from_df(symbol=symbol, frames=frames, settings=self.settings, mode=mode, now=now)
                 self.latest_signals[symbol] = setup
                 if setup is not None:
                     await self._publish_setup(setup)

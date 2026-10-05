@@ -12,6 +12,7 @@ from app.db.engine import SessionLocal
 from app.db.models import ExecutionRecord
 from app.exchange.client import MEXCClient, MEXCAPIError
 from app.schemas.setup import TradeSetup
+from app.execution.economics import RuntimeTradeSetup, prepare_runtime_setup, current_contract_with_basis
 
 RESERVED_STATES = {"PREPARED", "UNKNOWN", "ACCEPTED", "FILLED", "UNPROTECTED"}
 HALT_STATES = {"PREPARED", "UNKNOWN", "UNPROTECTED"}
@@ -86,10 +87,30 @@ class AutoExecutor:
                 available = float(balance.get("availableBalance", 0))
                 if equity <= 0 or available <= 0:
                     raise ValueError("No available USDT equity/margin")
-                distance = abs(setup.entry - setup.stop_loss) / setup.entry
-                risk_notional = equity * self.settings.risk_per_trade_percent / 100 / distance
-                # Leave 10% available margin for fees and rounding.
-                notional = min(risk_notional, available * self.settings.default_leverage * 0.9)
+                guarded = getattr(self.settings, "execution_cost_guard_enabled", False)
+                if guarded:
+                    contract = await current_contract_with_basis(self.client, setup.symbol)
+                    prepared = prepare_runtime_setup(setup, self.settings, contract, equity, available * .9,
+                                                     preferred_cap=getattr(setup, "leverage", None))
+                    # Update the durable setup with rounded geometry, chosen
+                    # leverage and fee-inclusive cash risk before submission.
+                    if isinstance(setup, RuntimeTradeSetup):
+                        for field in type(prepared).model_fields:
+                            setattr(setup, field, getattr(prepared, field))
+                    else:
+                        setup = prepared
+                    tp = setup.take_profits[0]
+                    notional = setup.position_size_usdt
+                    from app.db.models import SetupRecord
+                    async with SessionLocal() as session:
+                        saved = await session.get(SetupRecord, setup.id)
+                        if saved:
+                            saved.payload = setup.model_dump_json()
+                            await session.commit()
+                else:
+                    distance = abs(setup.entry - setup.stop_loss) / setup.entry
+                    risk_notional = equity * self.settings.risk_per_trade_percent / 100 / distance
+                    notional = min(risk_notional, available * self.settings.default_leverage * 0.9)
                 setup.position_size_usdt = notional
             except Exception:
                 # No create request has been attempted, so rejection is unambiguous.
@@ -99,7 +120,7 @@ class AutoExecutor:
             try:
                 result = await self.client.place_bracket_order(symbol=setup.symbol, direction=setup.direction,
                     notional_usdt=notional, entry=setup.entry, stop_loss=setup.stop_loss,
-                    take_profit=tp, leverage=self.settings.default_leverage, external_oid=external_oid)
+                    take_profit=tp, leverage=getattr(setup, "leverage", self.settings.default_leverage), external_oid=external_oid)
                 response_received = True
                 order_id = result.get("orderId")
                 if not order_id:

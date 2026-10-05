@@ -1,0 +1,455 @@
+{
+  "recorded_utc": "2026-10-04T23:53:15Z",
+  "status": "primary_automatic_transcript_obtained_and_rules_reviewed",
+  "source": "https://www.youtube.com/watch?v=bL4z-AjkNY0",
+  "title": "Как я торгую по Smart Money: разбор от А до Я",
+  "author": "TRADING VOLIUM",
+  "channel": "https://www.youtube.com/@Trading.Volium",
+  "published_utc": "2026-08-27T17:08:32Z",
+  "duration_seconds_video_details": 4364,
+  "duration_seconds_microformat": 4365,
+  "primary_transcript": {
+    "path": "work/video_strategy_new/transcript.txt",
+    "size_bytes": 125384,
+    "sha256": "7a6cd852be7019ae0c5ac6f0986de11996f55ad057ef3a640e94c899cbbde03e",
+    "language": "ru",
+    "automatic": true,
+    "method": "Documented IAB tab.content.exportYouTubeTranscript on public official watch URL",
+    "scope_reviewed": "Full trading-rule portion00:00-1:02:16; later promotional claims not used as trading evidence",
+    "full_transcript_exported_to_deliverables": false
+  },
+  "user_supplied_secondary_summary": {
+    "path": "C:\\Users\\Lenovo\\.codex\\attachments\\e3897302-0311-4b08-a909-9cd2759976c3\\Вставленный текст.txt",
+    "sha256": "ceaa072b9bf7abbb436753a0908014deb35a8a5eb405cd33e3ca6ca904d8de6e",
+    "classification": "USER-SUPPLIED secondary interpretation, checked against primary ASR; not independent source proof",
+    "read_in_full": true
+  },
+  "secondary_summary_corrections": [
+    {
+      "claim": "NY-only for BTC/ETH",
+      "primary_range": "37:39-38:23",
+      "correction": "London explicitly allowed for Bitcoin/US indices;16:30 preference does not prohibit London."
+    },
+    {
+      "claim": "exact1/3 equals30%",
+      "primary_range": "46:19-47:16",
+      "correction": "Narrator uses both approximate expressions; they are mathematically different, so a fixed0.30 or1/3 choice must be declared."
+    },
+    {
+      "claim": "always immutableSL",
+      "primary_range": "49:32-49:54;59:18-59:33",
+      "correction": "General instruction fixesSL/TP, but later example permits loweringSL when geometry exceeds2R. Preserve fixedstop as conservative chosen scope."
+    }
+  ],
+  "confirmed_rules": [
+    {
+      "id": "N01",
+      "range": "02:04-06:09",
+      "rule": "Intraday trades follow the D1 trend with matching H1 direction; disagreement belongs to a separate longer-trade scenario.",
+      "certainty": "explicit narrated concept",
+      "proxy_gaps": [
+        "swing scale",
+        "causal numerical trend definition"
+      ]
+    },
+    {
+      "id": "N02",
+      "range": "08:02-12:41",
+      "rule": "One or multiple local extremes can supply liquidity; a sweep without reaction is insufficient.",
+      "certainty": "explicit narrated concept",
+      "proxy_gaps": [
+        "pivot width",
+        "equal-high tolerance",
+        "reaction timing threshold"
+      ]
+    },
+    {
+      "id": "N03",
+      "range": "13:03-15:17",
+      "rule": "Prefer an unswept liquidity pool as target; place the stop beyond the swept protected extreme.",
+      "certainty": "explicit narrated concept",
+      "proxy_gaps": [
+        "buffer size",
+        "priority among pools"
+      ]
+    },
+    {
+      "id": "N04",
+      "range": "15:39-19:42",
+      "rule": "Three-candle outer-range gaps describe imbalance; fresh zones aligned with trend are preferred and opposite zones can invert.",
+      "certainty": "explicit narrated concept",
+      "proxy_gaps": [
+        "minimum gap size",
+        "freshness definition",
+        "acceptance boundary"
+      ]
+    },
+    {
+      "id": "N05",
+      "range": "21:18-24:20",
+      "rule": "A is a liquidity-sweep origin with reaction; B is an opposing liquidity objective. Acceptance beyond a nearby B without reversal advances the objective.",
+      "certainty": "explicit narrated concept",
+      "not_supplied": [
+        "mandatory completed D1 reclaim at A",
+        "exactly two pre-A pivots",
+        "two right D1 bars for A",
+        "B must predate A",
+        "immediate next-day C"
+      ]
+    },
+    {
+      "id": "N06",
+      "range": "29:17-35:51",
+      "rule": "Read D1 A/B context and repeated H1 correction-manipulation-continuation while travelling toward B, then confirm the H1 sweep on M5.",
+      "certainty": "explicit narrated concept",
+      "proxy_gaps": [
+        "completed-leg rule",
+        "exact correction origin"
+      ]
+    },
+    {
+      "id": "N07",
+      "range": "37:39-38:50",
+      "rule": "London is allowed for Bitcoin and US indices; 16:30 UTC+3 is described as their most interesting activity, including Ethereum. This is not an NY-only prohibition.",
+      "certainty": "explicit narrated concept",
+      "proxy_gaps": [
+        "session end",
+        "DST rule"
+      ]
+    },
+    {
+      "id": "N08",
+      "range": "40:41-44:23",
+      "rule": "D1 context, H1 alignment and sweep, and an aggressive M5 V must agree. Confirmation is opposite-imbalance inversion OR opposite candle-body engulfment.",
+      "certainty": "explicit narrated concept",
+      "proxy_gaps": [
+        "precise engulfed candle",
+        "gap associated with raid",
+        "closed acceptance formula"
+      ]
+    },
+    {
+      "id": "N09",
+      "range": "46:19-47:16",
+      "rule": "Recovery should be at least approximately a third/30% of the manipulation; weak recovery is rejected or awaited.",
+      "certainty": "explicit approximate numeric rule",
+      "proxy_gaps": [
+        "30% versus exact one third",
+        "manipulation start selection",
+        "close versus high/low measurement"
+      ]
+    },
+    {
+      "id": "N10",
+      "range": "49:32-50:57",
+      "rule": "Keep structural stop and target, adjust entry by waiting for retest to obtain fixed 2R; reject hesitant repeated sweeps and comb-like recovery.",
+      "certainty": "explicit narrated concept",
+      "proxy_gaps": [
+        "maximum wait",
+        "strict monotone versus qualitative directness"
+      ]
+    },
+    {
+      "id": "N11",
+      "range": "51:10-53:58",
+      "rule": "Optional double confirmation waits for a new trend-aligned imbalance, retest and reaction when an idea is doubtful; it is not required for every trade.",
+      "certainty": "explicit optional branch",
+      "proxy_gaps": [
+        "objective doubtful-idea trigger",
+        "retest and reaction rules"
+      ]
+    },
+    {
+      "id": "N12",
+      "range": "54:21-56:19",
+      "rule": "Skip D1 range, unclear context, timeframe disagreement for intraday, missing lower-timeframe model, and almost-but-not-fully valid ideas.",
+      "certainty": "explicit narrated concept",
+      "proxy_gaps": [
+        "numerical range/uncertainty classifier"
+      ]
+    },
+    {
+      "id": "N13",
+      "range": "57:14-59:56",
+      "rule": "Intraday checklist explicitly matches D1/H1 direction, waits for opposite H1 liquidity manipulation in session, and confirms on M5 with fixed 2R.",
+      "certainty": "explicit narrated checklist",
+      "proxy_gaps": [
+        "pivot/trend algorithm",
+        "specific chart coordinates"
+      ]
+    },
+    {
+      "id": "N14",
+      "range": "59:18-59:33",
+      "rule": "For an illustrated 2.98R geometry the narrator permits raising entry or lowering stop, contrasting with the earlier general fixed-SL/TP statement.",
+      "certainty": "explicit local qualification",
+      "proxy_gaps": [
+        "permitted additional stop distance"
+      ],
+      "chosen_conservative_scope": "Keep the existing fixed protected stop and target; do not optimize stop distance from this aside."
+    },
+    {
+      "id": "N15",
+      "range": "1:00:33-1:01:59",
+      "rule": "If H1 corrects against D1, use a D1 imbalance zone OR daily liquidity sweep and an H1 aggressive model for swing, with fixed 2R and no session restriction.",
+      "certainty": "explicit narrated alternate setup",
+      "proxy_gaps": [
+        "fresh D1 zone selection",
+        "H1 acceptance/retest rules"
+      ],
+      "scope": "Documented separately; not an automatic M5 countertrend entry."
+    }
+  ],
+  "narrated_examples": [
+    {
+      "range": "15:58-19:42",
+      "asset": "Bitcoin",
+      "timeframe": "monthly",
+      "type": "imbalance illustrations",
+      "calendar_date": null,
+      "venue": null,
+      "exact_entry_stop_target": null
+    },
+    {
+      "range": "21:59-22:16",
+      "asset": "Nasdaq",
+      "timeframe": null,
+      "type": "sweep-origin and reversal illustration",
+      "calendar_date": null,
+      "venue": null,
+      "exact_entry_stop_target": null
+    },
+    {
+      "range": "24:20-24:50",
+      "asset": "GER40",
+      "timeframe": null,
+      "type": "repeat sweep and reversal illustration",
+      "calendar_date": null,
+      "venue": null,
+      "exact_entry_stop_target": null
+    },
+    {
+      "range": "32:11-34:20",
+      "asset": "Bitcoin",
+      "timeframe": "D1 context then H1 flow",
+      "type": "A/B and repeated continuation examples",
+      "calendar_date": null,
+      "venue": null,
+      "exact_entry_stop_target": null
+    },
+    {
+      "range": "39:25-40:19",
+      "asset": "S&P500",
+      "timeframe": "D1/H1",
+      "type": "session sweep example",
+      "calendar_date": null,
+      "venue": null,
+      "exact_entry_stop_target": null
+    },
+    {
+      "range": "46:19-47:16",
+      "asset": "E-mini S&P500 futures",
+      "timeframe": "M5",
+      "type": "recovery illustration plus schematic ruler",
+      "calendar_date": null,
+      "venue": "CME visible in the inspected public chart header",
+      "exact_entry_stop_target": null,
+      "evidence": "public frame near46:28; diagram near46:48-46:53; dates not used to infer trade timing"
+    },
+    {
+      "range": "47:32-48:17",
+      "asset": "gold",
+      "timeframe": "H1/M5",
+      "type": "skip example: H1 sweep at10:00, missing strong M5 recovery",
+      "calendar_date": null,
+      "venue": null,
+      "exact_entry_stop_target": null
+    },
+    {
+      "range": "48:26-49:28",
+      "asset": "USD/CHF",
+      "timeframe": "D1/H1/M5",
+      "type": "directional continuation and inversion entry example",
+      "calendar_date": null,
+      "venue": null,
+      "exact_entry_stop_target": null
+    },
+    {
+      "range": "53:03-53:47",
+      "asset": null,
+      "timeframe": "D1/H1/M5",
+      "type": "ordinary engulfment is enough; no mandatory double-confirm",
+      "calendar_date": null,
+      "venue": null,
+      "exact_entry_stop_target": null
+    }
+  ],
+  "current_function_mapping": [
+    {
+      "source_ids": [
+        "N01",
+        "N13"
+      ],
+      "functions": [
+        "volium._trend",
+        "volium_v4.diagnose_volium_v4_from_df"
+      ],
+      "assessment": "D1 numeric pivots exist, but v4 direction comes from its A/C hypothesis and no explicit H1 trend-agreement gate is present."
+    },
+    {
+      "source_ids": [
+        "N02",
+        "N05"
+      ],
+      "functions": [
+        "volium._pivots",
+        "volium_v2._preexisting_leg",
+        "volium_v3._latest_leg",
+        "volium_v4._post_sweep_break_leg"
+      ],
+      "assessment": "Actual sweep origins are modelled. Exactly2 pivots, pre-A trend, D1 reclaim/right-A, immediateC and completed-leg filters are additional numerical interpretations, not literal new-video rules."
+    },
+    {
+      "source_ids": [
+        "N03",
+        "N06",
+        "N10"
+      ],
+      "functions": [
+        "volium_v3._current_raid",
+        "volium_v2._correction_origin",
+        "volium_v4.diagnose_volium_v4_from_df",
+        "volium.rr2_entry"
+      ],
+      "assessment": "Whole known raid extreme, structural target and 2R retest are represented. Nearest single pivot, correction-peak selection, buffer2bps and raid grouping remain declared proxies."
+    },
+    {
+      "source_ids": [
+        "N04",
+        "N08"
+      ],
+      "functions": [
+        "volium_v3._raid_reaction",
+        "volium_v2._reaction_features"
+      ],
+      "assessment": "Body-clearance V exists; opposite FVG inversion branch is absent. Body/range.6, ATR.8, prior-body1 and max3 are conjunctive proxies rather than supplied author thresholds."
+    },
+    {
+      "source_ids": [
+        "N09"
+      ],
+      "functions": [
+        "volium_v2._reaction_features",
+        "volium_v3._raid_reaction"
+      ],
+      "assessment": "There is no explicit recovery/manipulation fraction filter. Recovery fraction is a distinct source criterion, not another name for body/ATR."
+    },
+    {
+      "source_ids": [
+        "N07"
+      ],
+      "functions": [
+        "volium.in_volium_session"
+      ],
+      "assessment": "London plus NY allowed is consistent with narration. The18:00 end and optional local-market DST schedules remain our assumptions; NY-only is not mandatory from source."
+    },
+    {
+      "source_ids": [
+        "N11",
+        "N12"
+      ],
+      "functions": [
+        "volium_v4.diagnose_volium_v4_from_df"
+      ],
+      "assessment": "Missing-context and missing-model rejection exists; discretionary doubt, double-confirm and explicit daily-range detection are not fully formalized."
+    },
+    {
+      "source_ids": [
+        "N15"
+      ],
+      "functions": [
+        "volium.analyze_volium_from_df",
+        "volium_v2.diagnose_volium_v2_from_df"
+      ],
+      "assessment": "Old swing includes daily sweep/H1 response, but not a complete daily-FVG alternative. V3/V4 are intraday-only; do not extend them silently."
+    }
+  ],
+  "differences_vs_first_video_scope": [
+    "Explicit inversion OR engulfment and approximate30% recovery refine the entry model that our frozen code represented with numeric body/ATR conditions.",
+    "Explicit D1/H1 agreement is supplied for intraday; it is absent as a gate in frozenV4.",
+    "Two main setups are intraday and longer swing; this video does not supply a newH1/M5/M1 scalp checklist.",
+    "Shared ideas remain actual sweep with reaction, protectedSL, unswept structuralTP, fixed2R and retest; this is not a claim the author changed those ideas.",
+    "ImmediateC/pre-A/right2 technical constraints were our formalization assumptions; the new narration does not establish them. Absence is not proof that every variant is forbidden."
+  ],
+  "proposed_small_causal_change_set": [
+    {
+      "id": "P01",
+      "proposal": "Separate experimental intraday context: current D1 A→unhitB and matchingH1 direction, with factual sweep/reaction origin; do not require immediateC or pre-A/right2 merely because old code did.",
+      "source_ids": [
+        "N01",
+        "N05",
+        "N06",
+        "N13"
+      ],
+      "not_yet_author_exact": "Select swing scale/A evidence/known timestamps causally in a separately declared model; do not disable trend, sweep orAintegrity just to increase signals."
+    },
+    {
+      "id": "P02",
+      "proposal": "Separate experimental entry confirmation: aggressive closed recovery with declared whole-manipulation fraction and engulfment OR associated oppositeFVG inversion; preserve actual raid extremeSL, fresh structuralTP and fixed2R retest.",
+      "source_ids": [
+        "N03",
+        "N08",
+        "N09",
+        "N10"
+      ],
+      "not_yet_author_exact": "The fraction denominator, exact acceptance/body boundary and directness classifier must be fixed before returns; no minimumATR/body numbers are supplied by source."
+    }
+  ],
+  "optional_branches_not_automatically_added": [
+    "Discretionary double-confirm lacks an objective trigger",
+    "DailyFVG swing alternative needs its own causal zone definition",
+    "NY-only sensitivity may be tested as an assumption but is not mandatory author rule"
+  ],
+  "visual_review": {
+    "available_after_retry": true,
+    "public_video_ranges_viewed": [
+      "46:24-46:28",
+      "46:48-46:53"
+    ],
+    "finding": "Drawn denominator is the whole downward manipulation, with a recovery leg measured upward from its bottom; not only a shallow wick below the liquidity line.",
+    "limit": "Exact candle/start-anchor algorithm is still unspecified; not allA/B source charts were visually audited."
+  },
+  "retrieval_history": {
+    "web_watch": "Online fetch throttled",
+    "python_urllib_watch": "DNS getaddrinfo11001",
+    "plain_public_watch_GET": 200,
+    "plain_ru_caption_formats_default_json3_srv3_vtt": "HTTP200 body0bytes",
+    "public_ShowTranscript_POST": "HTTP400 FAILED_PRECONDITION",
+    "CUA_inventory_initially_empty": true,
+    "CUA_create_iab_retry": "success",
+    "documented_transcript_export": "success"
+  },
+  "local_evidence_sha256": {
+    "work/video_strategy_new/watch.html": "e32fc4efee880d0d7224b33224f4f3475471079c46b2474717888791a2482a0b",
+    "work/video_strategy_new/watch_desktop.html": "330de7dcf87576d379ee189d91e54fa57fe112aa50cb2f1f040b892db009adfb",
+    "work/video_strategy_new/transcript.txt": "7a6cd852be7019ae0c5ac6f0986de11996f55ad057ef3a640e94c899cbbde03e",
+    "work/video_strategy/transcript.txt": "f05e35080270d4a45cede90a66cae3a7846fdd74f6afd64397ba9f3bb630c711"
+  },
+  "frozen_model_sha256": {
+    "app/strategy/volium_v2.py": "fa3a0a22505dc3ad65bc3744e3185b839bbdb692720dbfc0c9af85ba5cc42194",
+    "app/strategy/volium_v3.py": "c61f1c2f66d3725963540a4517acda8d5c18bfd448c1edabf02b2505c768521e",
+    "app/strategy/volium_v4.py": "bc6c1543ad2f133783011b46900dc79d8b9a6e632032e2388c82a012463ce0ad"
+  },
+  "remote_video_or_audio_media_downloaded": false,
+  "authentication_or_account_actions_performed": false,
+  "access_control_bypass_attempted": false,
+  "signature_or_token_deciphering_performed": false,
+  "old_transcript_modified": false,
+  "frozen_models_or_source_documents_modified": false,
+  "research_plans_parameters_or_results_modified": false,
+  "new_profitability_trials_run": false,
+  "historical_forward_prices_or_backtest_returns_inspected": false,
+  "author_demonstrated_outcomes_are_publicly_known": true,
+  "author_manual_outcomes_independent_profit_validation": false,
+  "full_manual_strategy_fidelity_claimed": false
+}

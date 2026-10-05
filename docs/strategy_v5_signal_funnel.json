@@ -1,0 +1,180 @@
+{
+  "audit": "fixed_v5_equal_returned_reason_funnel",
+  "created_at_utc": "2026-10-05T00:17:12.658392+00:00",
+  "venue": "mexc",
+  "parameters": {
+    "liquidity_mode": "equal_clusters",
+    "recovery_fraction": 0.3333333333333333,
+    "max_wait_bars": 12
+  },
+  "plan_sha256": "07053a68410e3ded5cdd33f021fd37c0a0b4d6e00c89068522f2dc89c9b464bf",
+  "provider_sha256": "511c6ebc592c2649ebd97e2b9f80c048bd180faad6ffa02fe5ffaa0bc2dfaacb",
+  "data_manifest_sha256": "e8faddde2751b55eed282ec8c02bb81df1d39c8d0d0514a9b1c4ab91060c0fe0",
+  "source_data_sha256": {
+    "BTC_USDT_1d.csv": "3defea6d74255b31c641a27465ac51821b00b4f7f6c19ec54e2e5ed021fc23fc",
+    "BTC_USDT_1h.csv": "78506e66c195e35aa2f715f5b924161318bfcecec64426f7619e973f231a442f",
+    "BTC_USDT_5m.csv": "1416d55900b2f2a3f1e5c28a6ae9051cd5cd683954ed5ec65e3dfeceede903db",
+    "ETH_USDT_1d.csv": "aaf8e91372a475b16b76d876ffe63a722b1c5e54da8054fe4b3e4149b1182f85",
+    "ETH_USDT_1h.csv": "3098ae7bb5940c6042efd18666dbcd1bcdbe917ff4cbd0daa2cfd744fbb647e7",
+    "ETH_USDT_5m.csv": "089210fd92fcea8095a8fba540f58078b305ac15884587464605daa002baa0ef"
+  },
+  "helper_sha256": "4ec4297ca42e049b35c2b3018245fe0bd9e70b29a327673c106b695cd4d25567",
+  "prefix_reader_sha256": "eb5cf72a2c21e6d9a6e69f015d720e8297c4152302b38e793e0914ae050e8c6b",
+  "source_review": {
+    "path": "C:\\Users\\Lenovo\\Documents\\Codex\\2026-10-05\\new-chat\\work\\bingx_futures_scalping_bot\\docs\\strategy_v5.md",
+    "sha256": "66b5476f404fd325e62add4aee9c9c3061712c4c5d2efe3c51ff574a5616e709"
+  },
+  "additional_wallet_trials": 0,
+  "parameters_changed": false,
+  "signed_code_modified": false,
+  "forward_returns_computed": false,
+  "test_fold_read": false,
+  "reason_semantics": "One returned terminal diagnostic reason per confirmed-close call. Early context reasons are first exits; event-search can retain the last candidate failure. This is not independent filter attribution.",
+  "aggregate": [
+    {
+      "mode": "intraday",
+      "phase": "train",
+      "session_confirmation_closes": 12600,
+      "accepted_outputs": 1,
+      "unique_accepted_symbol_ids": 1,
+      "returned_reason_counts": {
+        "accepted": 1,
+        "h1_context_misaligned": 1542,
+        "insufficient_whole_manipulation_recovery": 49,
+        "no_direct_engulfment_or_inversion": 2,
+        "no_unhit_daily_target": 420,
+        "no_v1_context_trend": 2898,
+        "no_v1_daily_origin": 7182,
+        "no_valid_liquidity_raid": 506
+      }
+    },
+    {
+      "mode": "intraday",
+      "phase": "validation",
+      "session_confirmation_closes": 7560,
+      "accepted_outputs": 0,
+      "unique_accepted_symbol_ids": 0,
+      "returned_reason_counts": {
+        "h1_context_misaligned": 767,
+        "insufficient_whole_manipulation_recovery": 9,
+        "no_direct_engulfment_or_inversion": 6,
+        "no_unhit_daily_target": 259,
+        "no_v1_context_trend": 2352,
+        "no_v1_daily_origin": 3696,
+        "no_valid_liquidity_raid": 471
+      }
+    }
+  ],
+  "by_symbol": [
+    {
+      "mode": "intraday",
+      "symbol": "BTC_USDT",
+      "phase": "train",
+      "window": {
+        "start_utc": "2025-11-08T15:25:00+00:00",
+        "end_utc": "2026-04-07T15:20:00+00:00",
+        "execution_bars": 43199
+      },
+      "session_confirmation_closes": 6300,
+      "accepted_outputs": 1,
+      "unique_accepted_ids": 1,
+      "returned_reason_counts": {
+        "accepted": 1,
+        "h1_context_misaligned": 1416,
+        "insufficient_whole_manipulation_recovery": 49,
+        "no_direct_engulfment_or_inversion": 2,
+        "no_unhit_daily_target": 420,
+        "no_v1_context_trend": 1512,
+        "no_v1_daily_origin": 2394,
+        "no_valid_liquidity_raid": 506
+      },
+      "first_confirmation_utc": "2025-11-09T07:00:00+00:00",
+      "last_confirmation_utc": "2026-04-07T14:55:00+00:00",
+      "history_bars": {
+        "1d": 110,
+        "1h": 110,
+        "5m": 990
+      }
+    },
+    {
+      "mode": "intraday",
+      "symbol": "BTC_USDT",
+      "phase": "validation",
+      "window": {
+        "start_utc": "2026-04-07T15:20:00+00:00",
+        "end_utc": "2026-07-06T15:20:00+00:00",
+        "execution_bars": 25920
+      },
+      "session_confirmation_closes": 3780,
+      "accepted_outputs": 0,
+      "unique_accepted_ids": 0,
+      "returned_reason_counts": {
+        "h1_context_misaligned": 18,
+        "no_v1_context_trend": 1050,
+        "no_v1_daily_origin": 2688,
+        "no_valid_liquidity_raid": 24
+      },
+      "first_confirmation_utc": "2026-04-08T07:00:00+00:00",
+      "last_confirmation_utc": "2026-07-06T14:55:00+00:00",
+      "history_bars": {
+        "1d": 110,
+        "1h": 110,
+        "5m": 990
+      }
+    },
+    {
+      "mode": "intraday",
+      "symbol": "ETH_USDT",
+      "phase": "train",
+      "window": {
+        "start_utc": "2025-11-08T15:25:00+00:00",
+        "end_utc": "2026-04-07T15:20:00+00:00",
+        "execution_bars": 43199
+      },
+      "session_confirmation_closes": 6300,
+      "accepted_outputs": 0,
+      "unique_accepted_ids": 0,
+      "returned_reason_counts": {
+        "h1_context_misaligned": 126,
+        "no_v1_context_trend": 1386,
+        "no_v1_daily_origin": 4788
+      },
+      "first_confirmation_utc": "2025-11-09T07:00:00+00:00",
+      "last_confirmation_utc": "2026-04-07T14:55:00+00:00",
+      "history_bars": {
+        "1d": 110,
+        "1h": 110,
+        "5m": 990
+      }
+    },
+    {
+      "mode": "intraday",
+      "symbol": "ETH_USDT",
+      "phase": "validation",
+      "window": {
+        "start_utc": "2026-04-07T15:20:00+00:00",
+        "end_utc": "2026-07-06T15:20:00+00:00",
+        "execution_bars": 25920
+      },
+      "session_confirmation_closes": 3780,
+      "accepted_outputs": 0,
+      "unique_accepted_ids": 0,
+      "returned_reason_counts": {
+        "h1_context_misaligned": 749,
+        "insufficient_whole_manipulation_recovery": 9,
+        "no_direct_engulfment_or_inversion": 6,
+        "no_unhit_daily_target": 259,
+        "no_v1_context_trend": 1302,
+        "no_v1_daily_origin": 1008,
+        "no_valid_liquidity_raid": 447
+      },
+      "first_confirmation_utc": "2026-04-08T07:00:00+00:00",
+      "last_confirmation_utc": "2026-07-06T14:55:00+00:00",
+      "history_bars": {
+        "1d": 110,
+        "1h": 110,
+        "5m": 990
+      }
+    }
+  ]
+}

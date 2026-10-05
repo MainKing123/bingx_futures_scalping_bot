@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import select
 from app.db.engine import SessionLocal
@@ -12,14 +14,29 @@ router = APIRouter(prefix="/api")
 @router.get("/status")
 async def status(request: Request):
     state = request.app.state
+    try:
+        marked = state.risk_manager.balance if state.settings.auto_execution else getattr(state.tracker, "marked_equity", state.risk_manager.balance)
+        if not isinstance(marked, (int, float)) or not math.isfinite(marked):
+            marked = None
+    except ValueError:
+        marked = None
     return {"exchange":"MEXC", "mode":"live" if state.settings.auto_execution else "paper",
         "strategy":state.settings.volium_mode, "symbols":state.scanner.active_symbols,
-        "entries_paused":not state.risk_manager.can_open_setup() or bool(state.scanner.selection_error), "reserved_slots":state.risk_manager.open_setups,
+        "strategy_profile":getattr(state.settings, "volium_strategy_profile", "v1_guarded"),
+        "strategy_is_experimental":getattr(state.settings, "volium_strategy_profile", "").startswith("v5"),
+        "universe_core_symbols":getattr(state.settings, "universe_core_symbols", []),
+        "entries_paused":not state.risk_manager.can_open_setup() or bool(state.scanner.selection_error) or marked is None, "reserved_slots":state.risk_manager.open_setups,
         "equity_usdt":state.risk_manager.balance,
+        "marked_equity_usdt":marked,
+        "unrealized_pnl_usdt":None if marked is None else marked-state.risk_manager.balance,
         "daily_opening_equity_usdt":state.risk_manager.daily_opening_balance,
         "daily_opening_equity_source":state.risk_manager.daily_opening_balance_source,
         "daily_pnl_usdt":state.risk_manager.get_daily_pnl(),
         "last_scan_at":state.scanner.last_scan_at,"errors":state.scanner.last_errors,
+        "execution_rejections":state.scanner.last_rejections,
+        "leverage_cap":state.settings.default_leverage,
+        "leverage_asset_caps":getattr(state.settings, "leverage_asset_caps", {}),
+        "execution_cost_guard":getattr(state.settings, "execution_cost_guard_enabled", False),
         "session_utc3":state.settings.volium_sessions_utc3,
         "session_clock":state.settings.volium_session_clock,
         "market_sessions":state.settings.volium_market_sessions,

@@ -1,12 +1,18 @@
 from __future__ import annotations
 from datetime import datetime, timezone
+import json
 from sqlalchemy import select
 from app.db.models import SetupRecord
 from app.schemas.setup import TradeSetup
 
 
 def record_to_setup(record):
-    setup = TradeSetup.model_validate_json(record.payload)
+    payload = json.loads(record.payload)
+    if "leverage" in payload:
+        from app.execution.economics import RuntimeTradeSetup
+        setup = RuntimeTradeSetup.model_validate(payload)
+    else:
+        setup = TradeSetup.model_validate(payload)
     setup.status = record.status
     return setup
 

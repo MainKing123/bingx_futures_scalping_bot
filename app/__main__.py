@@ -1,6 +1,6 @@
 import uvicorn
-from app.config import Settings
+from app.runtime_settings import RuntimeSettings
 
 if __name__ == "__main__":
-    settings = Settings()
+    settings = RuntimeSettings()
     uvicorn.run("app.main:app", host=settings.host, port=settings.port)
