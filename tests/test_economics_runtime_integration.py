@@ -92,7 +92,7 @@ def test_paper_cannot_spend_unrealized_loss_from_another_position(monkeypatch):
     isolated_database(monkeypatch,action)
 
 
-@pytest.mark.parametrize("mode,entry_tf,expected", [("intraday","5m",990),("scalp","1m",430)])
+@pytest.mark.parametrize("mode,entry_tf,expected", [("intraday","5m",991),("scalp","1m",431)])
 def test_v5_scanner_fetches_same_event_prefix_as_registered_replay(monkeypatch,mode,entry_tf,expected):
     from app.strategy import volium_v5
     async def action():

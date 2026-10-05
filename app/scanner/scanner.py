@@ -144,6 +144,10 @@ class SignalScanner:
             self.risk_manager.open_setups += 1
             saved = False
             try:
+                if not self.settings.auto_execution and hasattr(setup, "economics"):
+                    # Polling/admission may occur after the signal candle close.
+                    # Paper execution starts with a full minute after this time.
+                    setup.economics["paper_submitted_at_utc"] = datetime.now(timezone.utc).isoformat()
                 async with SessionLocal() as session:
                     await save_setup(session, setup, execution_mode="live" if self.settings.auto_execution else "paper")
                     saved = True
@@ -188,7 +192,9 @@ class SignalScanner:
                 if profile.startswith("v5"):
                     # Match the preregistered replay prefix: it must include the
                     # liquidity-bar boundary and the correction's FVG history.
-                    entry_limit = self.settings.volium_context_lookback * (12 if mode == "intraday" else 5) + 30
+                    # One extra bar allows for the currently forming candle,
+                    # leaving the replay's full closed prefix available.
+                    entry_limit = self.settings.volium_context_lookback * (12 if mode == "intraday" else 5) + 31
                 entry_frame = await self.client.get_klines(symbol, entry_timeframe, limit=entry_limit)
                 if entry_frame.empty:
                     return

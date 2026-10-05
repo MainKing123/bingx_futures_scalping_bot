@@ -405,3 +405,92 @@ def test_cancel_rechecks_fill_after_a_concurrent_cash_commit(monkeypatch):
         assert setup.status == "ACTIVE"
         assert tracker.risk_manager.balance == pytest.approx(999.93)
     isolated(monkeypatch, action)
+
+
+def test_actual_submission_skips_partial_minute_touches_and_earlier_funding(monkeypatch):
+    async def action(sessions):
+        client = funding_client(START + timedelta(seconds=30))
+        tracker = worker(client)
+        setup = idea()
+        setup.economics["paper_submitted_at_utc"] = (START + timedelta(seconds=30)).isoformat()
+        await persist(sessions, tracker, setup)
+        # The signal was known at 00:00, but the paper order was admitted at 00:00:30.
+        # This whole candle's touches and settlement ordering cannot prove a fill.
+        await tracker.process_paper_bars(setup.symbol, candles((0, 100, 111, 94, 105)))
+        assert setup.id not in tracker.filled_at
+        assert setup.id not in tracker.last_bar
+        assert tracker.risk_manager.balance == 1000
+        client.get_funding_history.assert_not_awaited()
+        await tracker.process_paper_bars(setup.symbol, candles((1, 100, 103, 99, 102)))
+        assert tracker.filled_at[setup.id] == START + timedelta(minutes=1)
+        assert tracker.risk_manager.balance == pytest.approx(999.93)
+        assert [event["id"] for event in setup.economics["paper_ledger"]["events"]] == ["entry"]
+    isolated(monkeypatch, action)
+
+
+def test_submission_time_survives_restore_and_backfill_starts_first_full_minute(monkeypatch):
+    now = START + timedelta(minutes=3, seconds=2)
+    async def action(sessions):
+        client = funding_client(START + timedelta(seconds=30), observed=now)
+        tracker = worker(client)
+        setup = idea()
+        setup.economics["paper_submitted_at_utc"] = (START + timedelta(seconds=30)).isoformat()
+        await persist(sessions, tracker, setup)
+        restarted = worker(client)
+        await restarted.restore()
+        await restarted.restore()
+        client.get_server_time.return_value = int(now.timestamp()*1000)
+        client.get_klines.return_value = candles((1, 100, 103, 99, 102), (2, 102, 104, 101, 103))
+        await restarted.poll()
+        client.get_klines.assert_awaited_once_with(setup.symbol, "1m", limit=2,
+            start_time=int((START + timedelta(minutes=1)).timestamp()*1000),
+            end_time=int(now.timestamp()*1000)-1500)
+        assert restarted.filled_at[setup.id] == START + timedelta(minutes=1)
+        assert restarted.risk_manager.balance == pytest.approx(999.93)
+        assert restarted.active[setup.id].economics["paper_submitted_at_utc"] == setup.economics["paper_submitted_at_utc"]
+    isolated(monkeypatch, action, now=now)
+
+
+def test_delayed_submission_does_not_extend_signal_expiry(monkeypatch):
+    now = START + timedelta(minutes=31, seconds=2)
+    async def action(sessions):
+        tracker = worker(funding_client(START + timedelta(minutes=30), observed=now))
+        setup = idea()
+        setup.economics["paper_submitted_at_utc"] = (START + timedelta(minutes=29, seconds=30)).isoformat()
+        await persist(sessions, tracker, setup)
+        await tracker.process_paper_bars(setup.symbol, candles((30, 100, 111, 94, 105)))
+        assert setup.status == "EXPIRED"
+        assert tracker.risk_manager.balance == 1000
+        assert setup.id not in tracker.filled_at
+        async with sessions() as session:
+            assert (await session.get(SetupRecord, setup.id)).pnl_usdt is None
+    isolated(monkeypatch, action, now=now)
+
+
+@pytest.mark.parametrize("submitted", [None, "invalid", "2026-10-05T00:00:30"])
+def test_invalid_submission_timestamp_fails_closed(monkeypatch, submitted):
+    async def action(sessions):
+        tracker = worker()
+        setup = idea()
+        setup.economics["paper_submitted_at_utc"] = submitted
+        await persist(sessions, tracker, setup)
+        with pytest.raises(ValueError, match="submission timestamp"):
+            await tracker.process_paper_bars(setup.symbol, candles((0, 100, 103, 99, 102)))
+        assert tracker.risk_manager.halted
+        assert tracker.risk_manager.balance == 1000
+    isolated(monkeypatch, action)
+
+
+def test_early_submission_metadata_cannot_activate_before_signal(monkeypatch):
+    async def action(sessions):
+        tracker = worker()
+        setup = idea()
+        setup.economics["paper_submitted_at_utc"] = (START - timedelta(seconds=30)).isoformat()
+        await persist(sessions, tracker, setup)
+        earlier = candles((0, 100, 111, 94, 105), start=START-timedelta(minutes=1))
+        await tracker.process_paper_bars(setup.symbol, earlier)
+        assert tracker.risk_manager.balance == 1000
+        assert setup.id not in tracker.filled_at
+        await tracker.process_paper_bars(setup.symbol, candles((0, 100, 103, 99, 102)))
+        assert tracker.filled_at[setup.id] == START
+    isolated(monkeypatch, action)

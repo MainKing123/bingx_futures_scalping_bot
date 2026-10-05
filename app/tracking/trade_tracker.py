@@ -38,6 +38,29 @@ class TradeTracker:
         return isinstance(setup, RuntimeTradeSetup)
 
     @staticmethod
+    def _runtime_activation(setup):
+        """Paper admission can occur after the strategy candle has closed."""
+        signal_at = as_utc(setup.timestamp)
+        if "paper_submitted_at_utc" not in setup.economics:
+            # Compatibility for old/manual records with no admission timestamp.
+            return signal_at
+        stamp = setup.economics["paper_submitted_at_utc"]
+        if not isinstance(stamp, str):
+            raise ValueError("Invalid paper submission timestamp")
+        try:
+            submitted = datetime.fromisoformat(stamp)
+        except ValueError:
+            raise ValueError("Invalid paper submission timestamp") from None
+        if submitted.tzinfo is None:
+            raise ValueError("Paper submission timestamp must include its timezone")
+        return max(signal_at, as_utc(submitted))
+
+    @classmethod
+    def _runtime_first_bar(cls, setup):
+        # A partial admission minute cannot establish post-admission touches.
+        return pd.Timestamp(cls._runtime_activation(setup)).ceil("min").to_pydatetime()
+
+    @staticmethod
     def _finite(value, name, *, positive=False):
         if isinstance(value, bool):
             raise ValueError("Invalid paper " + name)
@@ -124,6 +147,9 @@ class TradeTracker:
                     # A restored wallet cannot admit entries before public
                     # candles and funding coverage have been reconciled.
                     self.risk_manager.halted = True
+                    first_bar = self._runtime_first_bar(setup)
+                    if row.paper_filled_at and as_utc(row.paper_filled_at) < first_bar:
+                        raise ValueError("Paper fill precedes the actual submission; entries remain paused")
                 if row.paper_filled_at:
                     self.filled_at[setup.id] = as_utc(row.paper_filled_at)
                 if row.paper_last_bar_at:
@@ -210,11 +236,11 @@ class TradeTracker:
             if not isinstance(frame.index, pd.DatetimeIndex) or frame.index.tz is None or not frame.index.is_unique or not frame.index.is_monotonic_increasing:
                 raise ValueError("Runtime paper candles require unique ascending aware timestamps")
             needs_processing = [setup for setup in runtime if frame.index[-1].to_pydatetime() >
-                self.last_bar.get(setup.id, as_utc(setup.timestamp) - timedelta(microseconds=1))]
+                self.last_bar.get(setup.id, self._runtime_first_bar(setup) - timedelta(microseconds=1))]
             if needs_processing:
                 for setup in needs_processing:
                     previous = self.last_bar.get(setup.id)
-                    start = pd.Timestamp(previous + timedelta(minutes=1)) if previous else pd.Timestamp(as_utc(setup.timestamp)).ceil("min")
+                    start = pd.Timestamp(previous + timedelta(minutes=1)) if previous else pd.Timestamp(self._runtime_first_bar(setup))
                     new = frame.loc[frame.index >= start]
                     expected = pd.date_range(start, frame.index[-1], freq="min")
                     if not new.index.equals(expected):
@@ -223,15 +249,16 @@ class TradeTracker:
                         prices = {key: self._finite(candle[key], key, positive=True) for key in ("open", "high", "low", "close")}
                         if not prices["low"] <= min(prices["open"], prices["close"]) <= max(prices["open"], prices["close"]) <= prices["high"]:
                             raise ValueError("Invalid paper candle OHLC geometry")
-                starts = [max(as_utc(setup.timestamp), self.last_bar.get(setup.id, as_utc(setup.timestamp))) for setup in needs_processing]
+                starts = [max(self._runtime_first_bar(setup), self.last_bar.get(setup.id, self._runtime_first_bar(setup))) for setup in needs_processing]
                 funding = await self._validated_public_funding(symbol, min(starts))
         for setup in list(self.active.values()):
             if setup.symbol != symbol:
                 continue
-            cutoff = self.last_bar.get(setup.id, as_utc(setup.timestamp) - timedelta(microseconds=1))
+            first_bar = self._runtime_first_bar(setup) if self._runtime_paper(setup) else as_utc(setup.timestamp)
+            cutoff = self.last_bar.get(setup.id, first_bar - timedelta(microseconds=1))
             for ts, row in frame.iterrows():
                 bar_at = as_utc(ts.to_pydatetime())
-                if bar_at <= cutoff or bar_at < as_utc(setup.timestamp):
+                if bar_at <= cutoff or bar_at < first_bar:
                     continue
                 if self._runtime_paper(setup):
                     await self._process_runtime_bar(setup, bar_at, row, funding)
@@ -363,7 +390,7 @@ class TradeTracker:
         previous = self.last_bar.get(setup.id)
         if previous is not None and bar_at != previous + timedelta(minutes=1):
             raise ValueError("Runtime paper candle history is incomplete")
-        if previous is None and bar_at != pd.Timestamp(as_utc(setup.timestamp)).ceil("min").to_pydatetime():
+        if previous is None and bar_at != self._runtime_first_bar(setup):
             raise ValueError("Runtime paper candle history does not begin at the pending order")
         if bar_at + timedelta(minutes=1) > funding.attrs["observed_at"]:
             raise ValueError("Runtime paper candle is not closed at the funding observation")
@@ -507,7 +534,10 @@ class TradeTracker:
             if previous is not None:
                 starts.append(int(previous.timestamp() * 1000) + minute_ms)
             else:
-                earliest = min(as_utc(setup.timestamp), self.filled_at.get(setup.id, as_utc(setup.timestamp)))
+                if self._runtime_paper(setup):
+                    earliest = self._runtime_first_bar(setup)
+                else:
+                    earliest = min(as_utc(setup.timestamp), self.filled_at.get(setup.id, as_utc(setup.timestamp)))
                 starts.append(int(pd.Timestamp(earliest).ceil("min").timestamp() * 1000))
         if not starts or min(starts) > latest_open_ms:
             return
@@ -550,7 +580,7 @@ class TradeTracker:
                         runtime = [setup for setup in self.active.values()
                             if setup.symbol == symbol and self._runtime_paper(setup)]
                         if runtime and symbol not in self._funding_ok_symbols:
-                            start = min(self.last_bar.get(setup.id, as_utc(setup.timestamp)) for setup in runtime)
+                            start = min(self.last_bar.get(setup.id, self._runtime_first_bar(setup)) for setup in runtime)
                             await self._validated_public_funding(symbol, start)
                 except Exception:
                     self.risk_manager.halted = True

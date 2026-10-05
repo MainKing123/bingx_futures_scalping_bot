@@ -1,6 +1,6 @@
 {
   "audit": "fixed_v5_equal_returned_reason_funnel",
-  "created_at_utc": "2026-10-05T00:17:12.658392+00:00",
+  "created_at_utc": "2026-10-05T00:21:36.507746+00:00",
   "venue": "mexc",
   "parameters": {
     "liquidity_mode": "equal_clusters",
@@ -18,8 +18,8 @@
     "ETH_USDT_1h.csv": "3098ae7bb5940c6042efd18666dbcd1bcdbe917ff4cbd0daa2cfd744fbb647e7",
     "ETH_USDT_5m.csv": "089210fd92fcea8095a8fba540f58078b305ac15884587464605daa002baa0ef"
   },
-  "helper_sha256": "4ec4297ca42e049b35c2b3018245fe0bd9e70b29a327673c106b695cd4d25567",
-  "prefix_reader_sha256": "eb5cf72a2c21e6d9a6e69f015d720e8297c4152302b38e793e0914ae050e8c6b",
+  "helper_sha256": "1de6950a9706425fdf6124c1d71f9b516f35050e92db46837af6253945b5e95d",
+  "prefix_reader_sha256": "5440f17cc2f76216b309f6bb8e1ee22cc1b1dc8bee9af474a382024b18c27ed4",
   "source_review": {
     "path": "C:\\Users\\Lenovo\\Documents\\Codex\\2026-10-05\\new-chat\\work\\bingx_futures_scalping_bot\\docs\\strategy_v5.md",
     "sha256": "66b5476f404fd325e62add4aee9c9c3061712c4c5d2efe3c51ff574a5616e709"
@@ -29,7 +29,7 @@
   "signed_code_modified": false,
   "forward_returns_computed": false,
   "test_fold_read": false,
-  "reason_semantics": "One returned terminal diagnostic reason per confirmed-close call. Early context reasons are first exits; event-search can retain the last candidate failure. This is not independent filter attribution.",
+  "reason_semantics": "One returned terminal diagnostic reason per confirmed-close call. Early context reasons are first exits; event-search can retain the last candidate failure. This is not independent filter attribution. Repeated candle closes share daily states and are not independent opportunities or samples.",
   "aggregate": [
     {
       "mode": "intraday",
